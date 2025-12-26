@@ -1,0 +1,20 @@
+﻿<Window x:Class="ICDControl.LoginWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ICD System Login" Height="400" Width="350" WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
+    <Border Background="#F0F2F5" Padding="20">
+        <StackPanel VerticalAlignment="Center">
+            <TextBlock Text="ICD Control" FontSize="28" FontWeight="Bold" Foreground="#333" HorizontalAlignment="Center" Margin="0,0,0,30"/>
+
+            <TextBlock Text="Email Address" Foreground="#555" Margin="0,0,0,5"/>
+            <TextBox x:Name="EmailTxt" Padding="5" Height="30"/>
+
+            <TextBlock Text="Password" Foreground="#555" Margin="0,15,0,5"/>
+            <PasswordBox x:Name="PassBox" Padding="5" Height="30"/>
+
+            <Button Content="Login" Click="Login_Click" Height="40" Margin="0,30,0,0" Background="#007ACC" Foreground="White" FontSize="14" FontWeight="SemiBold"/>
+
+            <Button Content="Create New Account" Click="Register_Click" Margin="0,10,0,0" Background="Transparent" BorderThickness="0" Foreground="#007ACC" Cursor="Hand"/>
+        </StackPanel>
+    </Border>
+</Window>
