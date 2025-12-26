@@ -1,0 +1,40 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using IcdControl.Models;
+using IcdControl.Server.Data;
+using System.Threading.Tasks;
+
+namespace IcdControl.Server.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class IcdController : ControllerBase
+    {
+        private readonly DatabaseService _db;
+
+        // DatabaseService is injected by DI
+        public IcdController(DatabaseService db) => _db = db;
+
+        [HttpPost("login")]
+        public IActionResult Login([FromBody] LoginRequest req)
+        {
+            var user = _db.Authenticate(req.Email, req.Password);
+            return user != null ? Ok(user) : Unauthorized();
+        }
+
+        [HttpPost("register")]
+        public IActionResult Register([FromBody] RegisterRequest req)
+        {
+            if (req == null) return BadRequest();
+            var created = _db.CreateUser(req);
+            return created ? Ok() : Conflict("Email already exists or invalid data");
+        }
+
+        [HttpPost("save")]
+        public IActionResult Save([FromBody] Icd icd)
+        {
+            _db.SaveIcd(icd);
+            return Ok();
+        }
+    }
+}

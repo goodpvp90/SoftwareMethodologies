@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "IcdControl.Client\\IcdControl.Client.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "IcdControl.Server\\IcdControl.Server.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

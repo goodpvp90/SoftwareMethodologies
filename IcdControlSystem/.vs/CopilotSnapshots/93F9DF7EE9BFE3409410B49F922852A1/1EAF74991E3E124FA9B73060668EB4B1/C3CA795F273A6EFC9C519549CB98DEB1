@@ -1,0 +1,170 @@
+﻿using Microsoft.Data.Sqlite;
+using System.Text.Json;
+using System.Security.Cryptography;
+using System.Text;
+using IcdControl.Models;
+
+namespace IcdControl.Server.Data
+{
+    public class DatabaseService
+    {
+        private string _conn = "Data Source=icd_system.db;Mode=ReadWriteCreate;Cache=Shared";
+
+        public DatabaseService()
+        {
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+            // create tables if not exists
+            using var cmd1 = c.CreateCommand();
+            cmd1.CommandText = "CREATE TABLE IF NOT EXISTS Users (UserId TEXT PRIMARY KEY, Email TEXT, PasswordHash TEXT, IsAdmin INTEGER)";
+            cmd1.ExecuteNonQuery();
+
+            using var cmd2 = c.CreateCommand();
+            cmd2.CommandText = "CREATE TABLE IF NOT EXISTS Icds (IcdId TEXT PRIMARY KEY, Name TEXT, Version REAL, StructureContent TEXT)";
+            cmd2.ExecuteNonQuery();
+        }
+
+        public User? Authenticate(string email, string pass)
+        {
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(pass))
+                return null;
+
+            // Hash incoming password to compare with stored hash
+            var hashed = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(pass)));
+
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = "SELECT UserId, Email, PasswordHash, IsAdmin FROM Users WHERE Email = $e AND PasswordHash = $p";
+            cmd.Parameters.AddWithValue("$e", email);
+            cmd.Parameters.AddWithValue("$p", hashed);
+
+            using var r = cmd.ExecuteReader();
+            if (r.Read())
+            {
+                var user = new User
+                {
+                    UserId = r.GetString(0),
+                    Email = r.GetString(1),
+                    PasswordHash = r.IsDBNull(2) ? null : r.GetString(2),
+                    IsAdmin = !r.IsDBNull(3) && r.GetInt64(3) != 0
+                };
+                return user;
+            }
+            return null;
+        }
+
+        public void SaveIcd(Icd icd)
+        {
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+            var json = JsonSerializer.Serialize(icd.Messages);
+
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = @"INSERT OR REPLACE INTO Icds (IcdId, Name, Version, StructureContent) VALUES ($id, $n, $v, $s)";
+            cmd.Parameters.AddWithValue("$id", icd.IcdId);
+            cmd.Parameters.AddWithValue("$n", icd.Name ?? string.Empty);
+            cmd.Parameters.AddWithValue("$v", icd.Version);
+            cmd.Parameters.AddWithValue("$s", json ?? string.Empty);
+            cmd.ExecuteNonQuery();
+        }
+
+        public bool CreateUser(RegisterRequest req)
+        {
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+
+            // Check if email already exists
+            using var checkCmd = c.CreateCommand();
+            checkCmd.CommandText = "SELECT COUNT(1) FROM Users WHERE Email = $email";
+            checkCmd.Parameters.AddWithValue("$email", req.Email);
+            var exists = (long)checkCmd.ExecuteScalar()! > 0;
+
+            if (exists)
+            {
+                return false; // Email already exists
+            }
+
+            // Hash the password (in production, use a proper hashing library)
+            var passwordHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(req.Password)));
+
+            // Insert the new user
+            using var insertCmd = c.CreateCommand();
+            insertCmd.CommandText = "INSERT INTO Users (UserId, Email, PasswordHash, IsAdmin) VALUES ($id, $email, $passwordHash, $isAdmin)";
+            insertCmd.Parameters.AddWithValue("$id", Guid.NewGuid().ToString());
+            insertCmd.Parameters.AddWithValue("$email", req.Email);
+            insertCmd.Parameters.AddWithValue("$passwordHash", passwordHash);
+            insertCmd.Parameters.AddWithValue("$isAdmin", 0);
+            insertCmd.ExecuteNonQuery();
+
+            return true;
+        }
+
+        // New: get all ICDs
+        public List<Icd> GetAllIcds()
+        {
+            var list = new List<Icd>();
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = "SELECT IcdId, Name, Version, StructureContent FROM Icds";
+            using var r = cmd.ExecuteReader();
+            while (r.Read())
+            {
+                var icd = new Icd
+                {
+                    IcdId = r.IsDBNull(0) ? Guid.NewGuid().ToString() : r.GetString(0),
+                    Name = r.IsDBNull(1) ? string.Empty : r.GetString(1),
+                    Version = r.IsDBNull(2) ? 0 : r.GetDouble(2),
+                };
+                var content = r.IsDBNull(3) ? string.Empty : r.GetString(3);
+                try
+                {
+                    icd.Messages = string.IsNullOrWhiteSpace(content)
+                        ? new List<Message>()
+                        : JsonSerializer.Deserialize<List<Message>>(content) ?? new List<Message>();
+                }
+                catch
+                {
+                    icd.Messages = new List<Message>();
+                }
+                list.Add(icd);
+            }
+            return list;
+        }
+
+        // New: get single ICD by id
+        public Icd? GetIcdById(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return null;
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = "SELECT IcdId, Name, Version, StructureContent FROM Icds WHERE IcdId = $id";
+            cmd.Parameters.AddWithValue("$id", id);
+            using var r = cmd.ExecuteReader();
+            if (r.Read())
+            {
+                var icd = new Icd
+                {
+                    IcdId = r.IsDBNull(0) ? Guid.NewGuid().ToString() : r.GetString(0),
+                    Name = r.IsDBNull(1) ? string.Empty : r.GetString(1),
+                    Version = r.IsDBNull(2) ? 0 : r.GetDouble(2),
+                };
+                var content = r.IsDBNull(3) ? string.Empty : r.GetString(3);
+                try
+                {
+                    icd.Messages = string.IsNullOrWhiteSpace(content)
+                        ? new List<Message>()
+                        : JsonSerializer.Deserialize<List<Message>>(content) ?? new List<Message>();
+                }
+                catch
+                {
+                    icd.Messages = new List<Message>();
+                }
+                return icd;
+            }
+            return null;
+        }
+    }
+}

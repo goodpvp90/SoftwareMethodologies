@@ -1,0 +1,6 @@
+@IcdControl.Server_HostAddress = http://localhost:5273
+
+GET {{IcdControl.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

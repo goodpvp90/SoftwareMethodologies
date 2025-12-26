@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "dgSpecHash": "sTeoLNcoRds=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\benzac\\source\\repos\\IcdControlSystem\\IcdControl.Client\\IcdControl.Client.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\benzac\\.nuget\\packages\\system.io.pipelines\\10.0.1\\system.io.pipelines.10.0.1.nupkg.sha512",
+    "C:\\Users\\benzac\\.nuget\\packages\\system.net.http.json\\10.0.1\\system.net.http.json.10.0.1.nupkg.sha512",
+    "C:\\Users\\benzac\\.nuget\\packages\\system.text.encodings.web\\10.0.1\\system.text.encodings.web.10.0.1.nupkg.sha512",
+    "C:\\Users\\benzac\\.nuget\\packages\\system.text.json\\10.0.1\\system.text.json.10.0.1.nupkg.sha512"
+  ],
+  "logs": []
+}
