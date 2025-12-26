@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("IcdControl.Server")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7ffa7dcec1eaeb8f38dd9ac66d6ecf1ba3b431f4")]
 [assembly: System.Reflection.AssemblyProductAttribute("IcdControl.Server")]
 [assembly: System.Reflection.AssemblyTitleAttribute("IcdControl.Server")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -45,6 +45,7 @@ namespace IcdControl.Models
         public double Version { get; set; }
         public string Description { get; set; }
         public List<Message> Messages { get; set; } = new List<Message>();
+        public List<Struct> Structs { get; set; } = new List<Struct>();
     }
 
     // אובייקט עזר להתחברות

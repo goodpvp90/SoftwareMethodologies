@@ -1,1 +1,11 @@
-{"Version":1,"Hash":"GU9NEyrLEtYgwdDnlc8MAjuXsJ8fhpGyurflCDQTxok=","Source":"IcdControl.Server","BasePath":"_content/IcdControl.Server","Mode":"Default","ManifestType":"Build","ReferencedProjectsConfiguration":[],"DiscoveryPatterns":[],"Assets":[],"Endpoints":[]}
+{
+  "Version": 1,
+  "Hash": "tTb9rL98kHCJ+DjVai+62Eu/io0SFeoahaGh9y+pAiM=",
+  "Source": "IcdControl.Server",
+  "BasePath": "_content/IcdControl.Server",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

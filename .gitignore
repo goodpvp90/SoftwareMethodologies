@@ -1,3 +1,14 @@
-ICDControl.vpp.*
+## Visual Studio specific ##
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Build results ##
+[Bb]in/
+[Oo]bj/
+
+## Other ##
 .DS_Store
-.DS_Store
+Thumbs.db
