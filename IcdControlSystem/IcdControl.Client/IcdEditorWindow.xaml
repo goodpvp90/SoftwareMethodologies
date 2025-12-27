@@ -1,26 +1,82 @@
 <Window x:Class="IcdControl.Client.IcdEditorWindow"
- xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
- xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
- Title="ICD Editor" Height="500" Width="700" WindowStartupLocation="CenterOwner">
- <Grid Margin="10">
- <Grid.RowDefinitions>
- <RowDefinition Height="Auto" />
- <RowDefinition Height="*" />
- <RowDefinition Height="Auto" />
- </Grid.RowDefinitions>
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ICD Editor" Height="650" Width="1000"
+        WindowStartupLocation="CenterOwner">
 
- <StackPanel Orientation="Horizontal">
- <TextBlock Text="ICD: " FontWeight="Bold" />
- <TextBlock x:Name="NameTxt" />
- <TextBlock Text=" Version: " Margin="8,0,0,0" />
- <TextBlock x:Name="VersionTxt" />
- </StackPanel>
+	<Grid Margin="10">
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto"/>
+			<RowDefinition Height="*"/>
+			<RowDefinition Height="Auto"/>
+		</Grid.RowDefinitions>
 
- <TextBox x:Name="MessagesTxt" Grid.Row="1" AcceptsReturn="True" VerticalScrollBarVisibility="Visible" />
+		<StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+			<TextBlock Text="ICD Name:" VerticalAlignment="Center" FontWeight="Bold"/>
+			<TextBox x:Name="NameTxt" Width="200" Margin="5,0,20,0"/>
 
- <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
- <Button Content="Save" Click="Save_Click" Width="90" Margin="0,0,8,0" />
- <Button Content="Close" Click="Close_Click" Width="90" />
- </StackPanel>
- </Grid>
+			<TextBlock Text="Version:" VerticalAlignment="Center" FontWeight="Bold"/>
+			<TextBox x:Name="VersionTxt" Width="80" Margin="5,0,0,0"/>
+		</StackPanel>
+
+		<Grid Grid.Row="1">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="1*"/>
+				<ColumnDefinition Width="5"/>
+				<ColumnDefinition Width="1*"/>
+			</Grid.ColumnDefinitions>
+
+			<GroupBox Header="Structure" Grid.Column="0">
+				<TreeView x:Name="IcdTree" SelectedItemChanged="IcdTree_SelectedItemChanged">
+					<TreeView.Resources>
+						<ContextMenu x:Key="ItemContextMenu">
+							<MenuItem Header="Add Field" Click="Ctx_AddField_Click"/>
+							<MenuItem Header="Add Nested Struct" Click="Ctx_AddStruct_Click"/>
+							<Separator/>
+							<MenuItem Header="Delete" Click="Ctx_Delete_Click" Foreground="Red"/>
+						</ContextMenu>
+						<ContextMenu x:Key="RootContextMenu">
+							<MenuItem Header="Add New Item" Click="Ctx_AddNewItem_Click"/>
+						</ContextMenu>
+					</TreeView.Resources>
+				</TreeView>
+			</GroupBox>
+
+			<GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"/>
+
+			<GroupBox x:Name="EditorPanel" Header="Properties" Grid.Column="2" Visibility="Hidden">
+				<StackPanel Margin="10">
+
+					<TextBlock Text="Name:"/>
+					<TextBox x:Name="PropNameTxt" Margin="0,5,0,10" TextChanged="PropNameTxt_TextChanged"/>
+
+					<StackPanel x:Name="FieldPropsPanel">
+						<TextBlock Text="Type:"/>
+						<ComboBox x:Name="PropTypeCombo"
+                                  Margin="0,5,0,10"
+                                  SelectionChanged="PropTypeCombo_SelectionChanged"/>
+					</StackPanel>
+
+					<StackPanel x:Name="StructLinkPanel" Visibility="Collapsed">
+						<TextBlock Text="Link to Defined Struct:" FontWeight="Bold" Foreground="Blue"/>
+						<ComboBox x:Name="StructLinkCombo"
+                                  Margin="0,5,0,10"
+                                  SelectionChanged="StructLinkCombo_SelectionChanged"/>
+						<TextBlock Text="* Selecting a struct here defines this item as an instance of that struct."
+                                   FontSize="10" Foreground="Gray" TextWrapping="Wrap"/>
+					</StackPanel>
+
+					<CheckBox x:Name="PropIsUnionChk" Content="Is Union" Margin="0,5,0,10" Checked="PropIsUnionChk_Changed" Unchecked="PropIsUnionChk_Changed"/>
+
+					<TextBlock Text="Selected Item Info:" Foreground="Gray" Margin="0,20,0,5"/>
+					<TextBlock x:Name="DebugInfoTxt" TextWrapping="Wrap" Foreground="Gray"/>
+				</StackPanel>
+			</GroupBox>
+		</Grid>
+
+		<StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+			<Button Content="Save to Server" Width="120" Margin="0,0,10,0" Click="Save_Click"/>
+			<Button Content="Close" Width="100" Click="Close_Click"/>
+		</StackPanel>
+	</Grid>
 </Window>

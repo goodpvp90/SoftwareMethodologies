@@ -19,6 +19,7 @@ namespace IcdControl.Models
     public class Struct : BaseField
     {
         public bool IsUnion { get; set; }
+        public string StructType { get; set; }
         public List<BaseField> Fields { get; set; } = new List<BaseField>();
     }
 
