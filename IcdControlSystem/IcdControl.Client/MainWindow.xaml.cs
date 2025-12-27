@@ -1,4 +1,6 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Collections.Generic;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Windows;
 using IcdControl.Models;
@@ -19,6 +21,12 @@ namespace IcdControl.Client
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            // Admin Check
+            if (ApiClient.CurrentUser != null && ApiClient.CurrentUser.IsAdmin)
+            {
+                AdminPanel.Visibility = Visibility.Visible;
+            }
+
             await LoadIcds();
         }
 
@@ -35,10 +43,7 @@ namespace IcdControl.Client
             }
         }
 
-        private async void RefreshBtn_Click(object sender, RoutedEventArgs e)
-        {
-            await LoadIcds();
-        }
+        private async void RefreshBtn_Click(object sender, RoutedEventArgs e) => await LoadIcds();
 
         private void NewBtn_Click(object sender, RoutedEventArgs e)
         {
@@ -46,7 +51,6 @@ namespace IcdControl.Client
             win.Owner = this;
             if (win.ShowDialog() == true)
             {
-                // saved, refresh
                 _ = LoadIcds();
             }
         }
@@ -61,7 +65,7 @@ namespace IcdControl.Client
             }
             else
             {
-                MessageBox.Show("Select an ICD first.");
+                MessageBox.Show("Please select an ICD from the list.");
             }
         }
 
@@ -74,7 +78,7 @@ namespace IcdControl.Client
                     var res = await ApiClient.Client.GetAsync($"api/icd/{selected.IcdId}/export");
                     if (!res.IsSuccessStatusCode)
                     {
-                        MessageBox.Show($"Export failed: {(int)res.StatusCode} {res.ReasonPhrase}");
+                        MessageBox.Show($"Export failed: {res.ReasonPhrase}");
                         return;
                     }
                     var content = await res.Content.ReadAsStringAsync();
@@ -82,7 +86,7 @@ namespace IcdControl.Client
                     if (dlg.ShowDialog() == true)
                     {
                         File.WriteAllText(dlg.FileName, content, Encoding.UTF8);
-                        MessageBox.Show("Export saved.");
+                        MessageBox.Show("Export saved successfully.");
                     }
                 }
                 catch (Exception ex)
@@ -92,8 +96,15 @@ namespace IcdControl.Client
             }
             else
             {
-                MessageBox.Show("Select an ICD first.");
+                MessageBox.Show("Please select an ICD first.");
             }
+        }
+
+        private void AdminPermissions_Click(object sender, RoutedEventArgs e)
+        {
+            var win = new AdminPermissionsWindow();
+            win.Owner = this;
+            win.ShowDialog();
         }
 
         private string MakeSafeFileName(string name)

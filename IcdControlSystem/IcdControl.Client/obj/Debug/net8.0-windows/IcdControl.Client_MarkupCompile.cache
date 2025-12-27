@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
 C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\App.xaml
-5627154362
+61833499564
 
-91058884060
+10-1483625991
 344-1137307113
-IcdEditorWindow.xaml;LoginWindow.xaml;MainWindow.xaml;NewIcdWindow.xaml;RegisterWindow.xaml;
+AdminPermissionsWindow.xaml;IcdEditorWindow.xaml;LoginWindow.xaml;MainWindow.xaml;NewIcdWindow.xaml;RegisterWindow.xaml;
 
 False
 

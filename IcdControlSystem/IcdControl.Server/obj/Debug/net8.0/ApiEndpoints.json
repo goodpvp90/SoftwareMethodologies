@@ -33,62 +33,31 @@
   },
   {
     "ContainingType": "IcdControl.Server.Controllers.IcdController",
-    "Method": "GetStructs",
-    "RelativePath": "api/Icd/admin/{icdId}/structs",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "icdId",
-        "Type": "System.String",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "IcdControl.Server.Controllers.IcdController",
-    "Method": "GetStructPerms",
-    "RelativePath": "api/Icd/admin/{icdId}/user/{userId}/struct-perms",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "icdId",
-        "Type": "System.String",
-        "IsRequired": true
-      },
-      {
-        "Name": "userId",
-        "Type": "System.String",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "IcdControl.Server.Controllers.IcdController",
-    "Method": "SetStructPerms",
-    "RelativePath": "api/Icd/admin/{icdId}/user/{userId}/struct-perms",
+    "Method": "GrantPermission",
+    "RelativePath": "api/Icd/admin/grant",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
+        "Name": "req",
+        "Type": "IcdControl.Server.Controllers.IcdController\u002BGrantRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "GetIcdPermissions",
+    "RelativePath": "api/Icd/admin/icd/{icdId}/permissions",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
         "Name": "icdId",
         "Type": "System.String",
-        "IsRequired": true
-      },
-      {
-        "Name": "userId",
-        "Type": "System.String",
-        "IsRequired": true
-      },
-      {
-        "Name": "req",
-        "Type": "System.Collections.Generic.List\u00601[[IcdControl.Server.Controllers.IcdController\u002BSetStructPermRequest, IcdControl.Server, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
         "IsRequired": true
       }
     ],
@@ -153,7 +122,13 @@
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
-    "Parameters": [],
+    "Parameters": [
+      {
+        "Name": "icd",
+        "Type": "IcdControl.Models.Icd",
+        "IsRequired": true
+      }
+    ],
     "ReturnTypes": []
   },
   {

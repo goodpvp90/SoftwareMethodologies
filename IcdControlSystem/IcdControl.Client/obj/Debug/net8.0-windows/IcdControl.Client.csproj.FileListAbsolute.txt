@@ -175,3 +175,6 @@ C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdContr
 C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\IcdControl.Client.pdb
 C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\IcdControl.Client.genruntimeconfig.cache
 C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\ref\IcdControl.Client.dll
+C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\App.baml
+C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\AdminPermissionsWindow.baml
+C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\AdminPermissionsWindow.g.cs

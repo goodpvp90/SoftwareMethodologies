@@ -5,27 +5,53 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:IcdControl.Client"
         mc:Ignorable="d"
-        Title="ICD Manager" Height="450" Width="800" Loaded="Window_Loaded">
-    <Grid Margin="10">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+        Title="ICD Control System" Height="600" Width="1000" 
+        WindowStartupLocation="CenterScreen" Background="{StaticResource BackgroundColor}"
+        Loaded="Window_Loaded">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,0,8">
-            <Button x:Name="RefreshBtn" Content="Refresh" Click="RefreshBtn_Click" Width="90" Margin="0,0,8,0" />
-            <Button x:Name="NewBtn" Content="New ICD" Click="NewBtn_Click" Width="90" Margin="0,0,8,0" />
-            <Button x:Name="OpenBtn" Content="Open" Click="OpenBtn_Click" Width="90" Margin="0,0,8,0" />
-            <Button x:Name="ExportBtn" Content="Export .h" Click="ExportBtn_Click" Width="90" />
-        </StackPanel>
+        <Border Grid.Column="0" Background="White" BorderBrush="{StaticResource BorderColor}" BorderThickness="0,0,1,0">
+            <StackPanel Margin="20">
+                <TextBlock Text="ICD Control" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" Margin="0,0,0,30"/>
 
-        <DataGrid x:Name="IcdGrid" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*" />
-                <DataGridTextColumn Header="Version" Binding="{Binding Version}" Width="120" />
-                <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="200" />
-                <DataGridTextColumn Header="Messages" Binding="{Binding Messages.Count}" Width="90" />
-            </DataGrid.Columns>
-        </DataGrid>
+                <TextBlock Text="MENU" FontSize="12" Foreground="{StaticResource TextSecondaryColor}" Margin="0,0,0,10"/>
+                <Button x:Name="NewBtn" Content="+ New ICD" Style="{StaticResource ModernBtn}" Click="NewBtn_Click" Margin="0,0,0,10"/>
+                <Button x:Name="RefreshBtn" Content="Refresh List" Style="{StaticResource SecondaryBtn}" Click="RefreshBtn_Click" Margin="0,0,0,10"/>
+
+                <TextBlock Text="ACTIONS" FontSize="12" Foreground="{StaticResource TextSecondaryColor}" Margin="0,20,0,10"/>
+                <Button x:Name="OpenBtn" Content="Open Editor" Style="{StaticResource SecondaryBtn}" Click="OpenBtn_Click" Margin="0,0,0,10"/>
+                <Button x:Name="ExportBtn" Content="Export Header" Style="{StaticResource SecondaryBtn}" Click="ExportBtn_Click" Margin="0,0,0,10"/>
+
+                <StackPanel x:Name="AdminPanel" Visibility="Collapsed">
+                    <TextBlock Text="ADMIN" FontSize="12" Foreground="{StaticResource TextSecondaryColor}" Margin="0,20,0,10"/>
+                    <Button Content="Manage Permissions" Style="{StaticResource SecondaryBtn}" Click="AdminPermissions_Click" Margin="0,0,0,10"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Column="1" Margin="30">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="Dashboard" FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryColor}" Margin="0,0,0,20"/>
+
+            <Border Grid.Row="1" Background="White" CornerRadius="8" BorderBrush="{StaticResource BorderColor}" BorderThickness="1">
+                <DataGrid x:Name="IcdGrid" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="ICD Name" Binding="{Binding Name}" Width="1.5*" />
+                        <DataGridTextColumn Header="Version" Binding="{Binding Version}" Width="80" />
+                        <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="2*" />
+                        <DataGridTextColumn Header="Messages" Binding="{Binding Messages.Count}" Width="100" />
+                        <DataGridTextColumn Header="Structs" Binding="{Binding Structs.Count}" Width="100" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

@@ -72,6 +72,25 @@
         "tags": [
           "Icd"
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Icd"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Icd"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Icd"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -147,7 +166,7 @@
         }
       }
     },
-    "/api/Icd/admin/{icdId}/structs": {
+    "/api/Icd/admin/icd/{icdId}/permissions": {
       "get": {
         "tags": [
           "Icd"
@@ -169,81 +188,26 @@
         }
       }
     },
-    "/api/Icd/admin/{icdId}/user/{userId}/struct-perms": {
-      "get": {
-        "tags": [
-          "Icd"
-        ],
-        "parameters": [
-          {
-            "name": "icdId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      },
+    "/api/Icd/admin/grant": {
       "post": {
         "tags": [
           "Icd"
-        ],
-        "parameters": [
-          {
-            "name": "icdId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
         ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/SetStructPermRequest"
-                }
+                "$ref": "#/components/schemas/GrantRequest"
               }
             },
             "text/json": {
               "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/SetStructPermRequest"
-                }
+                "$ref": "#/components/schemas/GrantRequest"
               }
             },
             "application/*+json": {
               "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/SetStructPermRequest"
-                }
+                "$ref": "#/components/schemas/GrantRequest"
               }
             }
           }
@@ -297,6 +261,76 @@
   },
   "components": {
     "schemas": {
+      "BaseField": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "GrantRequest": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "nullable": true
+          },
+          "icdId": {
+            "type": "string",
+            "nullable": true
+          },
+          "canEdit": {
+            "type": "boolean"
+          },
+          "revoke": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Icd": {
+        "type": "object",
+        "properties": {
+          "icdId": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "version": {
+            "type": "number",
+            "format": "double"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            },
+            "nullable": true
+          },
+          "structs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Struct"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "LoginRequest": {
         "type": "object",
         "properties": {
@@ -305,6 +339,44 @@
             "nullable": true
           },
           "password": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "isUnion": {
+            "type": "boolean"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BaseField"
+            },
+            "nullable": true
+          },
+          "structType": {
+            "type": "string",
+            "nullable": true
+          },
+          "isRx": {
+            "type": "boolean"
+          },
+          "isMsb": {
+            "type": "boolean"
+          },
+          "description": {
             "type": "string",
             "nullable": true
           }
@@ -329,18 +401,30 @@
         },
         "additionalProperties": false
       },
-      "SetStructPermRequest": {
+      "Struct": {
         "type": "object",
         "properties": {
-          "structName": {
+          "id": {
             "type": "string",
             "nullable": true
           },
-          "canView": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "isUnion": {
             "type": "boolean"
           },
-          "canEdit": {
-            "type": "boolean"
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BaseField"
+            },
+            "nullable": true
+          },
+          "structType": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
