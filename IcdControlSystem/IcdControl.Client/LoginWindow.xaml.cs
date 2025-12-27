@@ -15,16 +15,16 @@ namespace IcdControl.Client
 
         private async void Login_Click(object sender, RoutedEventArgs e)
         {
-            var email = EmailTxt.Text;
+            var username = EmailTxt.Text; // control named EmailTxt used for username now
             var pass = PassBox.Password;
 
             try
             {
-                var res = await ApiClient.Client.PostAsJsonAsync("api/icd/login", new LoginRequest { Email = email, Password = pass });
+                var res = await ApiClient.Client.PostAsJsonAsync("api/icd/login", new LoginRequest { Username = username, Password = pass });
                 if (res.IsSuccessStatusCode)
                 {
                     var user = await res.Content.ReadFromJsonAsync<User>();
-                    ApiClient.CurrentUser = user;
+                    ApiClient.SetCurrentUser(user);
 
                     MessageBox.Show("מחובר לשרת!");
                     var main = new MainWindow();

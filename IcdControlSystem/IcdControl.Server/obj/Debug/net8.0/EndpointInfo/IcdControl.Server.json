@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.1",
+  "openapi": "3.0.4",
   "info": {
     "title": "IcdControl.Server",
     "version": "1.0"
@@ -72,25 +72,6 @@
         "tags": [
           "Icd"
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Icd"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Icd"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/Icd"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "OK"
@@ -154,6 +135,126 @@
         }
       }
     },
+    "/api/Icd/admin/users": {
+      "get": {
+        "tags": [
+          "Icd"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Icd/admin/{icdId}/structs": {
+      "get": {
+        "tags": [
+          "Icd"
+        ],
+        "parameters": [
+          {
+            "name": "icdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Icd/admin/{icdId}/user/{userId}/struct-perms": {
+      "get": {
+        "tags": [
+          "Icd"
+        ],
+        "parameters": [
+          {
+            "name": "icdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Icd"
+        ],
+        "parameters": [
+          {
+            "name": "icdId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SetStructPermRequest"
+                }
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SetStructPermRequest"
+                }
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SetStructPermRequest"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/WeatherForecast": {
       "get": {
         "tags": [
@@ -196,91 +297,14 @@
   },
   "components": {
     "schemas": {
-      "BaseField": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "nullable": true
-          },
-          "name": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "Icd": {
-        "type": "object",
-        "properties": {
-          "icdId": {
-            "type": "string",
-            "nullable": true
-          },
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "version": {
-            "type": "number",
-            "format": "double"
-          },
-          "description": {
-            "type": "string",
-            "nullable": true
-          },
-          "messages": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Message"
-            },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "LoginRequest": {
         "type": "object",
         "properties": {
-          "email": {
+          "username": {
             "type": "string",
             "nullable": true
           },
           "password": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "Message": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "nullable": true
-          },
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "isUnion": {
-            "type": "boolean"
-          },
-          "fields": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/BaseField"
-            },
-            "nullable": true
-          },
-          "isRx": {
-            "type": "boolean"
-          },
-          "isMsb": {
-            "type": "boolean"
-          },
-          "description": {
             "type": "string",
             "nullable": true
           }
@@ -301,6 +325,22 @@
           "password": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SetStructPermRequest": {
+        "type": "object",
+        "properties": {
+          "structName": {
+            "type": "string",
+            "nullable": true
+          },
+          "canView": {
+            "type": "boolean"
+          },
+          "canEdit": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -329,5 +369,13 @@
         "additionalProperties": false
       }
     }
-  }
+  },
+  "tags": [
+    {
+      "name": "Icd"
+    },
+    {
+      "name": "WeatherForecast"
+    }
+  ]
 }

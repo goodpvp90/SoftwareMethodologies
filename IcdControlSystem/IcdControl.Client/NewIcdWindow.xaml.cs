@@ -8,7 +8,8 @@ namespace IcdControl.Client
 {
  public partial class NewIcdWindow : Window
  {
- private HttpClient _http = new HttpClient { BaseAddress = new Uri("http://localhost:5273/") };
+ // Use centralized client
+ private HttpClient _http => ApiClient.Client;
  public NewIcdWindow()
  {
  InitializeComponent();
@@ -22,6 +23,16 @@ namespace IcdControl.Client
  var icd = new Icd { Name = name, Version = ver, Description = DescTxt.Text };
  try
  {
+ // Ensure user header is present
+ if (ApiClient.CurrentUser == null)
+ {
+ MessageBox.Show("You must be logged in to create an ICD.");
+ return;
+ }
+
+ if (!_http.DefaultRequestHeaders.Contains("X-UserId"))
+ _http.DefaultRequestHeaders.Add("X-UserId", ApiClient.CurrentUser.UserId);
+
  var res = await _http.PostAsJsonAsync("api/icd/save", icd);
  if (res.IsSuccessStatusCode)
  {

@@ -14,11 +14,8 @@ namespace IcdControl.Client
     {
         private readonly string _id;
 
-        // Static HttpClient
-        private static readonly HttpClient SharedClient = new HttpClient
-        {
-            BaseAddress = new Uri("http://localhost:5273/")
-        };
+        // Use centralized ApiClient
+        private static readonly HttpClient SharedClient = ApiClient.Client;
 
         private Icd _icd;
 
@@ -44,6 +41,13 @@ namespace IcdControl.Client
         {
             try
             {
+                // include user id header
+                if (ApiClient.CurrentUser != null)
+                {
+                    if (!SharedClient.DefaultRequestHeaders.Contains("X-UserId"))
+                        SharedClient.DefaultRequestHeaders.Add("X-UserId", ApiClient.CurrentUser.UserId);
+                }
+
                 _icd = await SharedClient.GetFromJsonAsync<Icd>($"api/icd/{_id}");
 
                 if (_icd == null)
@@ -428,6 +432,15 @@ namespace IcdControl.Client
 
             try
             {
+                if (ApiClient.CurrentUser == null)
+                {
+                    MessageBox.Show("You must be logged in to save.");
+                    return;
+                }
+
+                if (!SharedClient.DefaultRequestHeaders.Contains("X-UserId"))
+                    SharedClient.DefaultRequestHeaders.Add("X-UserId", ApiClient.CurrentUser.UserId);
+
                 var response = await SharedClient.PostAsJsonAsync("api/icd/save", _icd);
 
                 if (response.IsSuccessStatusCode)

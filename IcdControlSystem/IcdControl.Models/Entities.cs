@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace IcdControl.Models
 {
+    [JsonConverter(typeof(BaseFieldJsonConverter))]
     public abstract class BaseField
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -19,8 +21,9 @@ namespace IcdControl.Models
     public class Struct : BaseField
     {
         public bool IsUnion { get; set; }
-        public string StructType { get; set; }
         public List<BaseField> Fields { get; set; } = new List<BaseField>();
+        // optional: when this struct is an instance linking to a named struct definition
+        public string StructType { get; set; }
     }
 
     public class Message : Struct
@@ -52,7 +55,7 @@ namespace IcdControl.Models
     // אובייקט עזר להתחברות
     public class LoginRequest
     {
-        public string Email { get; set; }
+        public string Username { get; set; }
         public string Password { get; set; }
     }
 
@@ -62,5 +65,45 @@ namespace IcdControl.Models
         public string Username { get; set; }
         public string Email { get; set; }
         public string Password { get; set; }
+    }
+
+    // Custom converter to deserialize BaseField polymorphically
+    public class BaseFieldJsonConverter : JsonConverter<BaseField>
+    {
+        public override BaseField Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            using var doc = JsonDocument.ParseValue(ref reader);
+            var root = doc.RootElement;
+            // Determine type by properties
+            if (root.ValueKind != JsonValueKind.Object)
+                return null;
+
+            // If has 'Type' property it's a DataField
+            if (root.TryGetProperty("Type", out _))
+            {
+                return JsonSerializer.Deserialize<DataField>(root.GetRawText(), options);
+            }
+
+            // If has 'IsRx' or 'IsMsb' or 'Description' it's a Message
+            if (root.TryGetProperty("IsRx", out _) || root.TryGetProperty("IsMsb", out _) || root.TryGetProperty("Description", out _))
+            {
+                return JsonSerializer.Deserialize<Message>(root.GetRawText(), options);
+            }
+
+            // Otherwise treat as Struct
+            return JsonSerializer.Deserialize<Struct>(root.GetRawText(), options);
+        }
+
+        public override void Write(Utf8JsonWriter writer, BaseField value, JsonSerializerOptions options)
+        {
+            if (value == null)
+            {
+                writer.WriteNullValue();
+                return;
+            }
+
+            var type = value.GetType();
+            JsonSerializer.Serialize(writer, value, type, options);
+        }
     }
 }

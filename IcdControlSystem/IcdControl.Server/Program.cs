@@ -2,7 +2,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(opts =>
+{
+    // Prevent serialization errors when model graph contains cycles
+    opts.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    // Keep property names as-is (optional)
+    // opts.JsonSerializerOptions.PropertyNamingPolicy = null;
+});
 // Register DatabaseService for dependency injection
 builder.Services.AddSingleton<IcdControl.Server.Data.DatabaseService>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

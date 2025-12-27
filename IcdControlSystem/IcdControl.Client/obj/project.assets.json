@@ -900,23 +900,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\YAMEL\\.nuget\\packages\\": {},
+    "C:\\Users\\benzac\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\YAMEL\\Documents\\GitHub\\SoftwareMethodologies\\IcdControlSystem\\IcdControl.Client\\IcdControl.Client.csproj",
+      "projectUniqueName": "C:\\Users\\benzac\\Desktop\\Continue\\SoftwareMethodologies\\IcdControlSystem\\IcdControl.Client\\IcdControl.Client.csproj",
       "projectName": "IcdControl.Client",
-      "projectPath": "C:\\Users\\YAMEL\\Documents\\GitHub\\SoftwareMethodologies\\IcdControlSystem\\IcdControl.Client\\IcdControl.Client.csproj",
-      "packagesPath": "C:\\Users\\YAMEL\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\YAMEL\\Documents\\GitHub\\SoftwareMethodologies\\IcdControlSystem\\IcdControl.Client\\obj\\",
+      "projectPath": "C:\\Users\\benzac\\Desktop\\Continue\\SoftwareMethodologies\\IcdControlSystem\\IcdControl.Client\\IcdControl.Client.csproj",
+      "packagesPath": "C:\\Users\\benzac\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\benzac\\Desktop\\Continue\\SoftwareMethodologies\\IcdControlSystem\\IcdControl.Client\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\YAMEL\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\benzac\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -931,8 +931,8 @@
         "net8.0-windows7.0": {
           "targetAlias": "net8.0-windows",
           "projectReferences": {
-            "C:\\Users\\YAMEL\\Documents\\GitHub\\SoftwareMethodologies\\IcdControlSystem\\IcdControl.Models\\IcdControl.Models.csproj": {
-              "projectPath": "C:\\Users\\YAMEL\\Documents\\GitHub\\SoftwareMethodologies\\IcdControlSystem\\IcdControl.Models\\IcdControl.Models.csproj"
+            "C:\\Users\\benzac\\Desktop\\Continue\\SoftwareMethodologies\\IcdControlSystem\\IcdControl.Models\\IcdControl.Models.csproj": {
+              "projectPath": "C:\\Users\\benzac\\Desktop\\Continue\\SoftwareMethodologies\\IcdControlSystem\\IcdControl.Models\\IcdControl.Models.csproj"
             }
           }
         }
@@ -946,7 +946,8 @@
         "enableAudit": "true",
         "auditLevel": "low",
         "auditMode": "direct"
-      }
+      },
+      "SdkAnalysisLevel": "9.0.300"
     },
     "frameworks": {
       "net8.0-windows7.0": {
@@ -984,7 +985,7 @@
             "privateAssets": "none"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.400/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.306/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
