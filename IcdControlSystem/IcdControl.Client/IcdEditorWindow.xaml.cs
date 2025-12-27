@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Json;
+using System.Net;
 using System.Windows;
 using System.Windows.Controls;
 using IcdControl.Models;
@@ -222,6 +223,13 @@ namespace IcdControl.Client
             _icd.Name = NameTxt.Text;
             if (double.TryParse(VersionTxt.Text, out var v)) _icd.Version = v;
 
+            // Ensure auth header is present for this request
+            ApiClient.EnsureAuthHeader();
+
+            // Guard against null collections so serialization stays consistent
+            _icd.Messages ??= new List<Message>();
+            _icd.Structs ??= new List<Struct>();
+
             // This call should now work correctly because the infinite recursion in serialization is fixed in Entities.cs
             var res = await ApiClient.Client.PostAsJsonAsync("api/icd/save", _icd);
             if (res.IsSuccessStatusCode)
@@ -230,7 +238,14 @@ namespace IcdControl.Client
             }
             else
             {
-                MessageBox.Show("Save failed: " + res.ReasonPhrase);
+                var details = await res.Content.ReadAsStringAsync();
+                if (res.StatusCode == HttpStatusCode.Forbidden)
+                {
+                    MessageBox.Show("You don't have permission to save changes for this ICD.");
+                    return;
+                }
+
+                MessageBox.Show($"Save failed: {(int)res.StatusCode} {res.ReasonPhrase}\n{details}");
             }
         }
 

@@ -8,6 +8,10 @@ builder.Services.AddControllers().AddJsonOptions(opts =>
     opts.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     // Keep property names as-is (optional)
     // opts.JsonSerializerOptions.PropertyNamingPolicy = null;
+}).ConfigureApiBehaviorOptions(opts =>
+{
+    // Let controllers handle ModelState failures so we can return useful errors for bad JSON payloads.
+    opts.SuppressModelStateInvalidFilter = true;
 });
 // Register DatabaseService for dependency injection
 builder.Services.AddSingleton<IcdControl.Server.Data.DatabaseService>();
@@ -25,6 +29,13 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Allow request body to be read multiple times (used for better error reporting on bad JSON)
+app.Use(async (ctx, next) =>
+{
+    ctx.Request.EnableBuffering();
+    await next();
+});
 
 app.UseAuthorization();
 

@@ -19,7 +19,11 @@ namespace IcdControl.Client
             public string StatusText => !HasAccess ? "No Access" : (CanEdit ? "Editor" : "Viewer");
         }
 
-        public class PermissionDto { public string UserId { get; set; } public bool CanEdit { get; set; } }
+        public class PermissionDto
+        {
+            public string UserId { get; set; }
+            public bool CanEdit { get; set; }
+        }
 
         private List<Icd> _icds;
         private List<User> _users;
@@ -34,8 +38,10 @@ namespace IcdControl.Client
         {
             try
             {
+                ApiClient.EnsureAuthHeader();
                 _icds = await ApiClient.Client.GetFromJsonAsync<List<Icd>>("api/icd/list");
                 IcdCombo.ItemsSource = _icds;
+                // Fetch all non-admin users to manage their permissions
                 _users = await ApiClient.Client.GetFromJsonAsync<List<User>>("api/icd/admin/users");
             }
             catch (Exception ex)
@@ -50,6 +56,7 @@ namespace IcdControl.Client
             {
                 try
                 {
+                    // Fetch existing permissions for this ICD
                     var perms = await ApiClient.Client.GetFromJsonAsync<List<PermissionDto>>($"api/icd/admin/icd/{selectedIcd.IcdId}/permissions");
                     var list = new List<UserPermViewModel>();
 
@@ -68,13 +75,28 @@ namespace IcdControl.Client
                     }
                     PermGrid.ItemsSource = list;
                 }
-                catch (Exception ex) { MessageBox.Show("Error loading permissions: " + ex.Message); }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error loading permissions: " + ex.Message);
+                }
             }
         }
 
-        private async void GrantEdit_Click(object sender, RoutedEventArgs e) => await SetPermission(sender, true, false);
-        private async void GrantView_Click(object sender, RoutedEventArgs e) => await SetPermission(sender, false, false);
-        private async void Revoke_Click(object sender, RoutedEventArgs e) => await SetPermission(sender, false, true);
+        // Standard block syntax for event handlers to ensure XAML parser visibility
+        private async void GrantEdit_Click(object sender, RoutedEventArgs e)
+        {
+            await SetPermission(sender, true, false);
+        }
+
+        private async void GrantView_Click(object sender, RoutedEventArgs e)
+        {
+            await SetPermission(sender, false, false);
+        }
+
+        private async void Revoke_Click(object sender, RoutedEventArgs e)
+        {
+            await SetPermission(sender, false, true);
+        }
 
         private async System.Threading.Tasks.Task SetPermission(object sender, bool canEdit, bool revoke)
         {
@@ -85,11 +107,19 @@ namespace IcdControl.Client
             var res = await ApiClient.Client.PostAsJsonAsync("api/icd/admin/grant", req);
 
             if (res.IsSuccessStatusCode)
-                IcdCombo_SelectionChanged(null, null); // refresh
+            {
+                // Refresh the list to show updated status
+                IcdCombo_SelectionChanged(null, null);
+            }
             else
+            {
                 MessageBox.Show("Failed to update permission.");
+            }
         }
 
-        private void Close_Click(object sender, RoutedEventArgs e) => Close();
+        private void Close_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
     }
 }

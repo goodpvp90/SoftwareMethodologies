@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace IcdControl.Models
 {
-    // Apply converter to the base class so it handles all instances in lists/properties
+    // 1. Apply converter to the base class so it handles all instances in lists/properties automatically
     [JsonConverter(typeof(BaseFieldJsonConverter))]
     public abstract class BaseField
     {
@@ -65,7 +65,7 @@ namespace IcdControl.Models
         public string Password { get; set; }
     }
 
-    // FIXED: Manual serialization to prevent recursion and ensure data persistence
+    // FIXED: JsonConverter with Type Discriminator ($type)
     public class BaseFieldJsonConverter : JsonConverter<BaseField>
     {
         public override BaseField Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -73,35 +73,41 @@ namespace IcdControl.Models
             using var doc = JsonDocument.ParseValue(ref reader);
             var root = doc.RootElement;
 
-            BaseField field = null;
+            // Use the explicit discriminator to determine the type
+            var type = GetStr(root, "$type");
 
-            // Discriminator logic: Check properties to decide type
-            if (root.TryGetProperty("Type", out _))
+            BaseField field;
+
+            switch (type)
             {
-                var df = new DataField();
-                df.Type = GetStr(root, "Type");
-                df.SizeInBits = GetInt(root, "SizeInBits");
-                field = df;
-            }
-            else if (root.TryGetProperty("IsRx", out _) || root.TryGetProperty("IsMsb", out _) || root.TryGetProperty("Description", out _))
-            {
-                var msg = new Message();
-                msg.IsRx = GetBool(root, "IsRx");
-                msg.IsMsb = GetBool(root, "IsMsb");
-                msg.Description = GetStr(root, "Description");
-                // Message also has Struct properties
-                msg.IsUnion = GetBool(root, "IsUnion");
-                msg.StructType = GetStr(root, "StructType");
-                PopulateFields(root, msg, options);
-                field = msg;
-            }
-            else
-            {
-                var s = new Struct();
-                s.IsUnion = GetBool(root, "IsUnion");
-                s.StructType = GetStr(root, "StructType");
-                PopulateFields(root, s, options);
-                field = s;
+                case nameof(DataField):
+                    var df = new DataField();
+                    df.Type = GetStr(root, "Type");
+                    df.SizeInBits = GetInt(root, "SizeInBits");
+                    field = df;
+                    break;
+
+                case nameof(Message):
+                    var msg = new Message();
+                    msg.IsRx = GetBool(root, "IsRx");
+                    msg.IsMsb = GetBool(root, "IsMsb");
+                    msg.Description = GetStr(root, "Description");
+                    // Message inherits from Struct, so populate struct fields too
+                    msg.IsUnion = GetBool(root, "IsUnion");
+                    msg.StructType = GetStr(root, "StructType");
+                    PopulateFields(root, msg, options);
+                    field = msg;
+                    break;
+
+                case nameof(Struct):
+                default:
+                    // Fallback to Struct if unknown type or missing discriminator (backward compatibility)
+                    var s = new Struct();
+                    s.IsUnion = GetBool(root, "IsUnion");
+                    s.StructType = GetStr(root, "StructType");
+                    PopulateFields(root, s, options);
+                    field = s;
+                    break;
             }
 
             // Common properties
@@ -113,11 +119,10 @@ namespace IcdControl.Models
 
         private void PopulateFields(JsonElement root, Struct s, JsonSerializerOptions options)
         {
-            if (root.TryGetProperty("Fields", out var fieldsArr) && fieldsArr.ValueKind == JsonValueKind.Array)
+            if (TryGetPropertyIgnoreCase(root, "Fields", out var fieldsArr) && fieldsArr.ValueKind == JsonValueKind.Array)
             {
                 foreach (var el in fieldsArr.EnumerateArray())
                 {
-                    // This recursion is safe because it calls Read() for the child element
                     var child = JsonSerializer.Deserialize<BaseField>(el.GetRawText(), options);
                     if (child != null) s.Fields.Add(child);
                 }
@@ -127,6 +132,9 @@ namespace IcdControl.Models
         public override void Write(Utf8JsonWriter writer, BaseField value, JsonSerializerOptions options)
         {
             writer.WriteStartObject();
+
+            // Write the discriminator
+            writer.WriteString("$type", value.GetType().Name);
 
             // Common
             writer.WriteString("Id", value.Id);
@@ -155,7 +163,6 @@ namespace IcdControl.Models
                 writer.WriteStartArray();
                 foreach (var field in s.Fields)
                 {
-                    // Recursively serialize children
                     JsonSerializer.Serialize(writer, field, options);
                 }
                 writer.WriteEndArray();
@@ -164,9 +171,42 @@ namespace IcdControl.Models
             writer.WriteEndObject();
         }
 
-        // Helper methods
-        private string GetStr(JsonElement el, string prop) => el.TryGetProperty(prop, out var v) ? v.ToString() : null;
-        private int GetInt(JsonElement el, string prop) => el.TryGetProperty(prop, out var v) && v.TryGetInt32(out int i) ? i : 0;
-        private bool GetBool(JsonElement el, string prop) => el.TryGetProperty(prop, out var v) && v.GetBoolean();
+        private bool TryGetPropertyIgnoreCase(JsonElement el, string prop, out JsonElement value)
+        {
+            if (el.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var p in el.EnumerateObject())
+                {
+                    if (string.Equals(p.Name, prop, StringComparison.OrdinalIgnoreCase))
+                    {
+                        value = p.Value;
+                        return true;
+                    }
+                }
+            }
+
+            value = default;
+            return false;
+        }
+
+        // Helper methods (case-insensitive to tolerate camelCase vs PascalCase and "$type" casing)
+        private string GetStr(JsonElement el, string prop)
+        {
+            if (!TryGetPropertyIgnoreCase(el, prop, out var v)) return null;
+            if (v.ValueKind == JsonValueKind.Null) return null;
+            return v.ToString();
+        }
+
+        private int GetInt(JsonElement el, string prop)
+        {
+            if (!TryGetPropertyIgnoreCase(el, prop, out var v)) return 0;
+            return v.ValueKind != JsonValueKind.Null && v.TryGetInt32(out int i) ? i : 0;
+        }
+
+        private bool GetBool(JsonElement el, string prop)
+        {
+            if (!TryGetPropertyIgnoreCase(el, prop, out var v)) return false;
+            return v.ValueKind != JsonValueKind.Null && v.ValueKind == JsonValueKind.True;
+        }
     }
 }

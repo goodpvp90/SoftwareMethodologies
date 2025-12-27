@@ -209,7 +209,6 @@ C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdContr
 C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdControl.Server\obj\Debug\net8.0\staticwebassets.build.json.cache
 C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdControl.Server\obj\Debug\net8.0\staticwebassets.development.json
 C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdControl.Server\obj\Debug\net8.0\staticwebassets.build.endpoints.json
-C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdControl.Server\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdControl.Server\obj\Debug\net8.0\IcdContr.2A4AFB18.Up2Date
 C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdControl.Server\obj\Debug\net8.0\IcdControl.Server.dll
 C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdControl.Server\obj\Debug\net8.0\refint\IcdControl.Server.dll

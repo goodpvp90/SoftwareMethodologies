@@ -4,6 +4,10 @@ using IcdControl.Models;
 using IcdControl.Server.Data;
 using System.Text.Json;
 using System.Collections.Generic;
+using System.Text;
+using System.IO;
+using Microsoft.AspNetCore.Http;
+using System.Linq;
 
 namespace IcdControl.Server.Controllers
 {
@@ -39,11 +43,28 @@ namespace IcdControl.Server.Controllers
             return created ? Ok() : Conflict("Email or username already exists or invalid data");
         }
 
-        // FIXED: Using [FromBody] Icd with correct serializer configuration in Models
+        // Save uses manual body parsing so malformed JSON doesn't get auto-rejected by MVC formatters.
         [HttpPost("save")]
-        public IActionResult Save([FromBody] Icd icd)
+        public async Task<IActionResult> Save()
         {
-            if (icd == null) return BadRequest("Invalid Data");
+            var raw = await ReadRawBodyAsync();
+            Icd icd;
+            try
+            {
+                var opts = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+                opts.Converters.Add(new BaseFieldJsonConverter());
+
+                icd = JsonSerializer.Deserialize<Icd>(raw, opts);
+                if (icd == null) return BadRequest("Invalid Data: unable to parse payload");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to deserialize ICD payload. Body: {Body}", raw);
+                return BadRequest($"Invalid Data: {ex.Message}");
+            }
 
             if (string.IsNullOrEmpty(icd.IcdId)) icd.IcdId = System.Guid.NewGuid().ToString();
 
@@ -64,7 +85,7 @@ namespace IcdControl.Server.Controllers
             else
             {
                 if (!_db.HasEditPermission(userId, icd.IcdId))
-                    return Forbid();
+                    return StatusCode(StatusCodes.Status403Forbidden, "You do not have edit permission for this ICD.");
 
                 _db.SaveIcdRaw(icd.IcdId, icd.Name ?? "", icd.Version, jsonContent);
                 return Ok(new { IcdId = icd.IcdId });
@@ -90,7 +111,7 @@ namespace IcdControl.Server.Controllers
             var userId = uid.ToString();
 
             if (!_db.HasViewPermission(userId, id))
-                return Forbid();
+                return StatusCode(StatusCodes.Status403Forbidden, "You do not have permission to view this ICD.");
 
             var icd = _db.GetIcdById(id);
             if (icd == null) return NotFound();
@@ -105,7 +126,7 @@ namespace IcdControl.Server.Controllers
             var userId = uid.ToString();
 
             if (!_db.HasViewPermission(userId, id))
-                return Forbid();
+                return StatusCode(StatusCodes.Status403Forbidden, "You do not have permission to view this ICD.");
 
             var icd = _db.GetIcdById(id);
             if (icd == null) return NotFound();
@@ -119,21 +140,30 @@ namespace IcdControl.Server.Controllers
         [HttpGet("admin/users")]
         public IActionResult GetUsers()
         {
-            if (!CheckAdmin(out _)) return Forbid();
+            if (!CheckAdmin(out _)) return StatusCode(StatusCodes.Status403Forbidden, "Admin permission required.");
             return Ok(_db.GetUsers());
         }
 
         [HttpGet("admin/icd/{icdId}/permissions")]
         public IActionResult GetIcdPermissions(string icdId)
         {
-            if (!CheckAdmin(out _)) return Forbid();
-            return Ok(_db.GetIcdPermissions(icdId));
+            if (!CheckAdmin(out _)) return StatusCode(StatusCodes.Status403Forbidden, "Admin permission required.");
+            var perms = _db.GetIcdPermissions(icdId)
+                .Select(p => new PermissionDto { UserId = p.UserId, CanEdit = p.CanEdit })
+                .ToList();
+            return Ok(perms);
+        }
+
+        public class PermissionDto
+        {
+            public string UserId { get; set; }
+            public bool CanEdit { get; set; }
         }
 
         [HttpPost("admin/grant")]
         public IActionResult GrantPermission([FromBody] GrantRequest req)
         {
-            if (!CheckAdmin(out _)) return Forbid();
+            if (!CheckAdmin(out _)) return StatusCode(StatusCodes.Status403Forbidden, "Admin permission required.");
             if (req.Revoke)
                 _db.RevokePermission(req.UserId, req.IcdId);
             else
@@ -149,6 +179,16 @@ namespace IcdControl.Server.Controllers
             if (!Request.Headers.TryGetValue("X-UserId", out var uid) || string.IsNullOrEmpty(uid)) return false;
             userId = uid.ToString();
             return _db.IsUserAdmin(userId);
+        }
+
+        private async Task<string> ReadRawBodyAsync()
+        {
+            Request.EnableBuffering();
+            Request.Body.Position = 0;
+            using var reader = new StreamReader(Request.Body, Encoding.UTF8, leaveOpen: true);
+            var raw = await reader.ReadToEndAsync();
+            Request.Body.Position = 0;
+            return raw;
         }
     }
 }
