@@ -45,7 +45,6 @@
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
                     <Button Content="Export to .h" Style="{StaticResource SecondaryBtn}" Click="Export_Click" Margin="0,0,10,0" Width="100"/>
-
                     <Button Content="Save Changes" Style="{StaticResource ModernBtn}" Click="Save_Click" Width="120"/>
                     <Button Content="Close" Style="{StaticResource SecondaryBtn}" Click="Close_Click" Margin="10,0,0,0" Width="80"/>
                 </StackPanel>
@@ -65,6 +64,11 @@
                             <Setter Property="IsExpanded" Value="True"/>
                             <Setter Property="Padding" Value="5"/>
                             <Setter Property="FontSize" Value="14"/>
+                            <Setter Property="AllowDrop" Value="True"/>
+                            <EventSetter Event="PreviewMouseLeftButtonDown" Handler="Tree_PreviewMouseLeftButtonDown"/>
+                            <EventSetter Event="MouseMove" Handler="Tree_MouseMove"/>
+                            <EventSetter Event="DragOver" Handler="Tree_DragOver"/>
+                            <EventSetter Event="Drop" Handler="Tree_Drop"/>
                         </Style>
                     </TreeView.ItemContainerStyle>
                 </TreeView>

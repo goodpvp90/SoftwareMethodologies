@@ -5,8 +5,9 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input; // Required for Drag & Drop
 using System.Windows.Media;
-using Microsoft.Win32; // Required for SaveFileDialog
+using Microsoft.Win32;
 using IcdControl.Models;
 
 namespace IcdControl.Client
@@ -16,9 +17,12 @@ namespace IcdControl.Client
         private string _icdId;
         private Icd _icd;
         private bool _isLoading = true;
-
-        // Track selected field for property editing
         private BaseField _selectedField;
+
+        // --- Drag & Drop Variables ---
+        private Point _dragStartPoint;
+        private TreeViewItem _draggedItemContainer;
+        private BaseField _draggedData;
 
         public IcdEditorWindow(string icdId)
         {
@@ -26,7 +30,6 @@ namespace IcdControl.Client
             _icdId = icdId;
             Loaded += OnLoaded;
 
-            // Basic C types
             PropTypeCombo.ItemsSource = new string[] { "uint32_t", "int32_t", "float", "double", "uint8_t", "uint16_t", "bool", "byte" };
         }
 
@@ -61,38 +64,40 @@ namespace IcdControl.Client
         {
             IcdTree.Items.Clear();
 
-            // Messages Root
+            // Root: Messages
             var msgRoot = new TreeViewItem
             {
                 Header = "Messages",
                 FontWeight = FontWeights.Bold,
                 Tag = "MessagesRoot",
-                ContextMenu = (ContextMenu)Resources["RootContextMenu"]
+                ContextMenu = (ContextMenu)Resources["RootContextMenu"],
+                AllowDrop = true
             };
+            msgRoot.DragOver += Tree_DragOver;
+            msgRoot.Drop += Tree_Drop;
 
             ((MenuItem)msgRoot.ContextMenu.Items[0]).Click += AddMessageBtn_Click;
 
             if (_icd.Messages != null)
-            {
                 foreach (var m in _icd.Messages) msgRoot.Items.Add(CreateTreeItem(m));
-            }
             IcdTree.Items.Add(msgRoot);
 
-            // Structs Root
+            // Root: Structs
             var structRoot = new TreeViewItem
             {
                 Header = "Structs",
                 FontWeight = FontWeights.Bold,
                 Tag = "StructsRoot",
-                ContextMenu = (ContextMenu)Resources["RootContextMenu"]
+                ContextMenu = (ContextMenu)Resources["RootContextMenu"],
+                AllowDrop = true
             };
+            structRoot.DragOver += Tree_DragOver;
+            structRoot.Drop += Tree_Drop;
 
             ((MenuItem)structRoot.ContextMenu.Items[0]).Click += AddStructBtn_Click;
 
             if (_icd.Structs != null)
-            {
                 foreach (var s in _icd.Structs) structRoot.Items.Add(CreateTreeItem(s));
-            }
             IcdTree.Items.Add(structRoot);
         }
 
@@ -101,6 +106,14 @@ namespace IcdControl.Client
             var item = new TreeViewItem { Tag = field };
             UpdateTreeHeader(item, field);
             item.ContextMenu = (ContextMenu)Resources["ItemContextMenu"];
+
+            // --- Enable Drag & Drop on every item ---
+            item.AllowDrop = true;
+            item.PreviewMouseLeftButtonDown += Tree_PreviewMouseLeftButtonDown;
+            item.MouseMove += Tree_MouseMove;
+            item.DragOver += Tree_DragOver;
+            item.Drop += Tree_Drop;
+            // ----------------------------------------
 
             if (field is Struct s && s.Fields != null)
             {
@@ -112,7 +125,6 @@ namespace IcdControl.Client
         private void UpdateTreeHeader(TreeViewItem item, BaseField field)
         {
             if (item == null || field == null) return;
-
             string header = field.Name;
 
             if (field is DataField df)
@@ -124,7 +136,6 @@ namespace IcdControl.Client
             {
                 header += $" ({st.StructType})";
             }
-
             item.Header = header;
         }
 
@@ -166,8 +177,12 @@ namespace IcdControl.Client
 
         private void AddMessageBtn_Click(object sender, RoutedEventArgs e)
         {
-            var newMsg = new Message { Name = "New_Message", Description = "New Message" };
+            var newMsg = new Message { Name = "New_Message" };
             if (_icd.Messages == null) _icd.Messages = new List<Message>();
+
+            // Ensure Unique Name on Create
+            newMsg.Name = GetUniqueName(_icd.Messages.Cast<BaseField>().ToList(), newMsg.Name);
+
             _icd.Messages.Add(newMsg);
             RefreshTree();
             RestoreSelection(newMsg);
@@ -177,6 +192,10 @@ namespace IcdControl.Client
         {
             var newStruct = new Struct { Name = "New_Struct" };
             if (_icd.Structs == null) _icd.Structs = new List<Struct>();
+
+            // Ensure Unique Name on Create
+            newStruct.Name = GetUniqueName(_icd.Structs.Cast<BaseField>().ToList(), newStruct.Name);
+
             _icd.Structs.Add(newStruct);
             RefreshTree();
             RestoreSelection(newStruct);
@@ -186,12 +205,10 @@ namespace IcdControl.Client
         {
             if (IcdTree.SelectedItem is TreeViewItem item && item.Tag is Struct parentStruct)
             {
-                var newField = new DataField
-                {
-                    Name = "new_field",
-                    Type = "uint32_t",
-                    SizeInBits = 32
-                };
+                var newField = new DataField { Name = "new_field", Type = "uint32_t", SizeInBits = 32 };
+
+                // Ensure Unique Name
+                newField.Name = GetUniqueName(parentStruct.Fields, newField.Name);
 
                 parentStruct.Fields.Add(newField);
                 RefreshTree();
@@ -204,6 +221,10 @@ namespace IcdControl.Client
             if (IcdTree.SelectedItem is TreeViewItem item && item.Tag is Struct parentStruct)
             {
                 var newStruct = new Struct { Name = "nested_struct" };
+
+                // Ensure Unique Name
+                newStruct.Name = GetUniqueName(parentStruct.Fields, newStruct.Name);
+
                 parentStruct.Fields.Add(newStruct);
                 RefreshTree();
                 RestoreSelection(parentStruct);
@@ -234,7 +255,6 @@ namespace IcdControl.Client
                         return;
                     }
                 }
-
                 RemoveField(_icd, field);
                 RefreshTree();
                 EditorPanel.Visibility = Visibility.Hidden;
@@ -267,10 +287,7 @@ namespace IcdControl.Client
 
         private bool IsStructUsed(string structName)
         {
-            foreach (var msg in _icd.Messages)
-            {
-                if (CheckFieldsForUsage(msg.Fields, structName)) return true;
-            }
+            foreach (var msg in _icd.Messages) if (CheckFieldsForUsage(msg.Fields, structName)) return true;
             foreach (var st in _icd.Structs)
             {
                 if (st.Name == structName) continue;
@@ -311,16 +328,13 @@ namespace IcdControl.Client
                 {
                     FieldPropsPanel.Visibility = Visibility.Visible;
                     StructLinkPanel.Visibility = Visibility.Collapsed;
-
                     PropTypeCombo.SelectedItem = df.Type;
                     PropSizeTxt.Text = df.SizeInBits.ToString();
-
                     PropIsUnionChk.Visibility = Visibility.Collapsed;
                 }
                 else if (field is Struct s)
                 {
                     FieldPropsPanel.Visibility = Visibility.Collapsed;
-
                     bool isRoot = _icd.Structs.Contains(s) || _icd.Messages.Contains(s as Message);
 
                     if (isRoot)
@@ -339,10 +353,7 @@ namespace IcdControl.Client
                 }
                 _isLoading = false;
             }
-            else
-            {
-                EditorPanel.Visibility = Visibility.Hidden;
-            }
+            else EditorPanel.Visibility = Visibility.Hidden;
         }
 
         private void UpdateStructLinkList(TreeViewItem currentItem = null)
@@ -359,7 +370,6 @@ namespace IcdControl.Client
                 }
                 validStructs.Add(candidate.Name);
             }
-
             StructLinkCombo.ItemsSource = validStructs.OrderBy(n => n).ToList();
         }
 
@@ -367,20 +377,14 @@ namespace IcdControl.Client
         {
             if (visited.Contains(checkingStructName)) return false;
             visited.Add(checkingStructName);
-
             var definition = _icd.Structs.FirstOrDefault(s => s.Name == checkingStructName);
             if (definition == null || definition.Fields == null) return false;
 
             foreach (var field in definition.Fields)
             {
-                if (field is Struct st)
-                {
-                    if (st.StructType == targetStructName) return true;
-                    if (!string.IsNullOrEmpty(st.StructType))
-                    {
-                        if (IsStructReferencing(st.StructType, targetStructName, visited)) return true;
-                    }
-                }
+                if (field is Struct st && st.StructType == targetStructName) return true;
+                if (field is Struct st2 && !string.IsNullOrEmpty(st2.StructType))
+                    if (IsStructReferencing(st2.StructType, targetStructName, visited)) return true;
             }
             return false;
         }
@@ -392,8 +396,7 @@ namespace IcdControl.Client
             {
                 if (curr is TreeViewItem tvi && tvi.Tag is BaseField bf)
                 {
-                    if (_icd.Structs.Contains(bf) || _icd.Messages.Contains(bf as Message))
-                        return bf.Name;
+                    if (_icd.Structs.Contains(bf) || _icd.Messages.Contains(bf as Message)) return bf.Name;
                 }
                 curr = VisualTreeHelper.GetParent(curr);
             }
@@ -454,35 +457,26 @@ namespace IcdControl.Client
             if (double.TryParse(VersionTxt.Text, out var v)) _icd.Version = v;
 
             ApiClient.EnsureAuthHeader();
-
             _icd.Messages ??= new List<Message>();
             _icd.Structs ??= new List<Struct>();
 
             try
             {
                 var res = await ApiClient.Client.PostAsJsonAsync("api/icd/save", _icd);
-                if (res.IsSuccessStatusCode)
-                {
-                    MessageBox.Show("Saved successfully!");
-                }
+                if (res.IsSuccessStatusCode) MessageBox.Show("Saved successfully!");
                 else
                 {
                     var details = await res.Content.ReadAsStringAsync();
                     MessageBox.Show($"Save failed: {res.ReasonPhrase}\n{details}");
                 }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Network Error: " + ex.Message);
-            }
+            catch (Exception ex) { MessageBox.Show("Network Error: " + ex.Message); }
         }
 
-        // --- NEW: Export Logic ---
         private async void Export_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                // 1. Get the C code from server
                 ApiClient.EnsureAuthHeader();
                 var response = await ApiClient.Client.GetAsync($"api/icd/{_icdId}/export");
 
@@ -493,8 +487,6 @@ namespace IcdControl.Client
                 }
 
                 var cHeaderContent = await response.Content.ReadAsStringAsync();
-
-                // 2. Open Save File Dialog
                 var dialog = new SaveFileDialog
                 {
                     FileName = $"{_icd.Name}_v{_icd.Version}.h",
@@ -504,17 +496,186 @@ namespace IcdControl.Client
 
                 if (dialog.ShowDialog() == true)
                 {
-                    // 3. Write to file
                     System.IO.File.WriteAllText(dialog.FileName, cHeaderContent);
                     MessageBox.Show($"Exported successfully to:\n{dialog.FileName}");
                 }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error exporting file: {ex.Message}");
-            }
+            catch (Exception ex) { MessageBox.Show($"Error exporting file: {ex.Message}"); }
         }
 
         private void Close_Click(object sender, RoutedEventArgs e) => Close();
+
+        // ---------------------------------------------------------
+        // 5. Drag & Drop Logic (With Unique Name Check)
+        // ---------------------------------------------------------
+
+        private void Tree_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (sender is TreeViewItem item)
+            {
+                _dragStartPoint = e.GetPosition(null);
+                _draggedItemContainer = item;
+                _draggedData = item.Tag as BaseField;
+            }
+        }
+
+        private void Tree_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed && _draggedItemContainer != null && _draggedData != null)
+            {
+                var currentPoint = e.GetPosition(null);
+                if (Math.Abs(currentPoint.X - _dragStartPoint.X) > SystemParameters.MinimumHorizontalDragDistance ||
+                    Math.Abs(currentPoint.Y - _dragStartPoint.Y) > SystemParameters.MinimumVerticalDragDistance)
+                {
+                    DragDrop.DoDragDrop(_draggedItemContainer, _draggedData, DragDropEffects.Copy | DragDropEffects.Move);
+                }
+            }
+        }
+
+        private void Tree_DragOver(object sender, DragEventArgs e)
+        {
+            if (sender is TreeViewItem targetItem && targetItem.Tag is BaseField)
+            {
+                if (_draggedData == targetItem.Tag)
+                {
+                    e.Effects = DragDropEffects.None;
+                    e.Handled = true;
+                    return;
+                }
+
+                e.Effects = DragDropEffects.Copy | DragDropEffects.Move;
+                e.Handled = true;
+            }
+            else
+            {
+                e.Effects = DragDropEffects.None;
+                e.Handled = true;
+            }
+        }
+
+        private void Tree_Drop(object sender, DragEventArgs e)
+        {
+            if (sender is TreeViewItem targetItem && targetItem.Tag is BaseField targetField)
+            {
+                // ============================================
+                // SCENARIO A: Dropped ON A STRUCT HEADER
+                // ============================================
+                if (targetField is Struct targetStruct && IsDroppedOnHeader(targetItem, e))
+                {
+                    // 1. Link Instance
+                    if (_draggedData is Struct draggedStructDef && _icd.Structs.Contains(draggedStructDef))
+                    {
+                        string baseName = draggedStructDef.Name.ToLower() + "_instance";
+                        var newInstance = new Struct
+                        {
+                            Name = GetUniqueName(targetStruct.Fields, baseName),
+                            StructType = draggedStructDef.Name
+                        };
+                        targetStruct.Fields.Add(newInstance);
+                        RefreshTree();
+                        RestoreSelection(targetStruct);
+                    }
+                    // 2. DataField -> Copy/Duplicate
+                    else if (_draggedData is DataField draggedField)
+                    {
+                        // Use original name as base, then uniquify
+                        string baseName = draggedField.Name;
+
+                        var copy = new DataField
+                        {
+                            Name = GetUniqueName(targetStruct.Fields, baseName),
+                            Type = draggedField.Type,
+                            SizeInBits = draggedField.SizeInBits
+                        };
+                        targetStruct.Fields.Add(copy);
+                        RefreshTree();
+                        RestoreSelection(targetStruct);
+                    }
+                }
+                // ============================================
+                // SCENARIO B: Dropped ON A CHILD (Reorder / Insert)
+                // ============================================
+                else
+                {
+                    var targetParent = FindParentField(_icd, targetField);
+                    var sourceParent = FindParentField(_icd, _draggedData);
+
+                    if (targetParent != null && sourceParent == targetParent)
+                    {
+                        var point = e.GetPosition(targetItem);
+                        bool insertAfter = point.Y > (targetItem.ActualHeight / 2);
+
+                        targetParent.Fields.Remove(_draggedData);
+                        int targetIndex = targetParent.Fields.IndexOf(targetField);
+
+                        if (insertAfter) targetIndex++;
+
+                        if (targetIndex >= targetParent.Fields.Count)
+                            targetParent.Fields.Add(_draggedData);
+                        else
+                            targetParent.Fields.Insert(targetIndex, _draggedData);
+
+                        RefreshTree();
+                        RestoreSelection(targetParent);
+                    }
+                }
+
+                e.Handled = true;
+            }
+        }
+
+        // --- NEW HELPER: Get Unique Name (e.g., field, field_2, field_3) ---
+        private string GetUniqueName(List<BaseField> fields, string baseName)
+        {
+            if (fields == null) return baseName;
+
+            // 1. Try base name
+            if (!fields.Any(f => f.Name == baseName))
+                return baseName;
+
+            // 2. Try adding suffix numbers
+            int i = 2;
+            while (true)
+            {
+                string candidate = $"{baseName}_{i}";
+                if (!fields.Any(f => f.Name == candidate))
+                    return candidate;
+                i++;
+            }
+        }
+
+        private bool IsDroppedOnHeader(TreeViewItem item, DragEventArgs e)
+        {
+            return true; // Simplified for this logic
+        }
+
+        private Struct FindParentField(object context, BaseField child)
+        {
+            if (context is Icd root)
+            {
+                foreach (var m in root.Messages)
+                {
+                    if (m.Fields.Contains(child)) return m;
+                    var res = FindParentField(m, child);
+                    if (res != null) return res;
+                }
+                foreach (var s in root.Structs)
+                {
+                    if (s.Fields.Contains(child)) return s;
+                    var res = FindParentField(s, child);
+                    if (res != null) return res;
+                }
+            }
+            else if (context is Struct s)
+            {
+                foreach (var sub in s.Fields.OfType<Struct>())
+                {
+                    if (sub.Fields.Contains(child)) return sub;
+                    var res = FindParentField(sub, child);
+                    if (res != null) return res;
+                }
+            }
+            return null;
+        }
     }
 }
