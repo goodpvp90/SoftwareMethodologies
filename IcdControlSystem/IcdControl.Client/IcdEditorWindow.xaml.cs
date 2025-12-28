@@ -6,6 +6,7 @@ using System.Net.Http.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using Microsoft.Win32; // Required for SaveFileDialog
 using IcdControl.Models;
 
 namespace IcdControl.Client
@@ -25,6 +26,7 @@ namespace IcdControl.Client
             _icdId = icdId;
             Loaded += OnLoaded;
 
+            // Basic C types
             PropTypeCombo.ItemsSource = new string[] { "uint32_t", "int32_t", "float", "double", "uint8_t", "uint16_t", "bool", "byte" };
         }
 
@@ -60,11 +62,15 @@ namespace IcdControl.Client
             IcdTree.Items.Clear();
 
             // Messages Root
-            var msgRoot = new TreeViewItem { Header = "Messages", FontWeight = FontWeights.Bold, Tag = "MessagesRoot" };
-            msgRoot.ContextMenu = new ContextMenu();
-            var addMsg = new MenuItem { Header = "Add New Message" };
-            addMsg.Click += AddMessageBtn_Click;
-            msgRoot.ContextMenu.Items.Add(addMsg);
+            var msgRoot = new TreeViewItem
+            {
+                Header = "Messages",
+                FontWeight = FontWeights.Bold,
+                Tag = "MessagesRoot",
+                ContextMenu = (ContextMenu)Resources["RootContextMenu"]
+            };
+
+            ((MenuItem)msgRoot.ContextMenu.Items[0]).Click += AddMessageBtn_Click;
 
             if (_icd.Messages != null)
             {
@@ -73,11 +79,15 @@ namespace IcdControl.Client
             IcdTree.Items.Add(msgRoot);
 
             // Structs Root
-            var structRoot = new TreeViewItem { Header = "Structs", FontWeight = FontWeights.Bold, Tag = "StructsRoot" };
-            structRoot.ContextMenu = new ContextMenu();
-            var addStruct = new MenuItem { Header = "Add New Struct" };
-            addStruct.Click += AddStructBtn_Click;
-            structRoot.ContextMenu.Items.Add(addStruct);
+            var structRoot = new TreeViewItem
+            {
+                Header = "Structs",
+                FontWeight = FontWeights.Bold,
+                Tag = "StructsRoot",
+                ContextMenu = (ContextMenu)Resources["RootContextMenu"]
+            };
+
+            ((MenuItem)structRoot.ContextMenu.Items[0]).Click += AddStructBtn_Click;
 
             if (_icd.Structs != null)
             {
@@ -90,30 +100,8 @@ namespace IcdControl.Client
         {
             var item = new TreeViewItem { Tag = field };
             UpdateTreeHeader(item, field);
+            item.ContextMenu = (ContextMenu)Resources["ItemContextMenu"];
 
-            // Add Context Menu
-            var ctx = new ContextMenu();
-
-            if (field is Struct)
-            {
-                var addF = new MenuItem { Header = "Add Field" };
-                addF.Click += Ctx_AddField_Click;
-                ctx.Items.Add(addF);
-
-                var addS = new MenuItem { Header = "Add Nested Struct" };
-                addS.Click += Ctx_AddStruct_Click;
-                ctx.Items.Add(addS);
-
-                ctx.Items.Add(new Separator());
-            }
-
-            var del = new MenuItem { Header = "Delete", Foreground = Brushes.Red };
-            del.Click += Ctx_Delete_Click;
-            ctx.Items.Add(del);
-
-            item.ContextMenu = ctx;
-
-            // Recursively add children
             if (field is Struct s && s.Fields != null)
             {
                 foreach (var child in s.Fields) item.Items.Add(CreateTreeItem(child));
@@ -130,6 +118,7 @@ namespace IcdControl.Client
             if (field is DataField df)
             {
                 header += $" : {df.Type}";
+                if (df.SizeInBits > 0) header += $" ({df.SizeInBits}b)";
             }
             else if (field is Struct st && !string.IsNullOrEmpty(st.StructType))
             {
@@ -139,22 +128,18 @@ namespace IcdControl.Client
             item.Header = header;
         }
 
-        // --- NEW: Helper to find and expand a node after refresh ---
         private void RestoreSelection(BaseField target)
         {
             if (target == null) return;
             var item = FindTreeViewItem(IcdTree.Items, target);
             if (item != null)
             {
-                // Walk up and expand parents so the item is visible
                 var parent = item.Parent as TreeViewItem;
                 while (parent != null)
                 {
                     parent.IsExpanded = true;
                     parent = parent.Parent as TreeViewItem;
                 }
-
-                // Expand and select the item itself
                 item.IsExpanded = true;
                 item.IsSelected = true;
                 item.Focus();
@@ -168,8 +153,6 @@ namespace IcdControl.Client
                 if (obj is TreeViewItem item)
                 {
                     if (item.Tag == target) return item;
-
-                    // Recursive search
                     var found = FindTreeViewItem(item.Items, target);
                     if (found != null) return found;
                 }
@@ -187,7 +170,7 @@ namespace IcdControl.Client
             if (_icd.Messages == null) _icd.Messages = new List<Message>();
             _icd.Messages.Add(newMsg);
             RefreshTree();
-            RestoreSelection(newMsg); // Auto-select new item
+            RestoreSelection(newMsg);
         }
 
         private void AddStructBtn_Click(object sender, RoutedEventArgs e)
@@ -196,19 +179,22 @@ namespace IcdControl.Client
             if (_icd.Structs == null) _icd.Structs = new List<Struct>();
             _icd.Structs.Add(newStruct);
             RefreshTree();
-            RestoreSelection(newStruct); // Auto-select new item
+            RestoreSelection(newStruct);
         }
 
         private void Ctx_AddField_Click(object sender, RoutedEventArgs e)
         {
             if (IcdTree.SelectedItem is TreeViewItem item && item.Tag is Struct parentStruct)
             {
-                var newField = new DataField { Name = "new_field", Type = "uint32_t", SizeInBits = 32 };
+                var newField = new DataField
+                {
+                    Name = "new_field",
+                    Type = "uint32_t",
+                    SizeInBits = 32
+                };
+
                 parentStruct.Fields.Add(newField);
-
                 RefreshTree();
-
-                // Keep the parent expanded and selected so we can see the new field
                 RestoreSelection(parentStruct);
             }
         }
@@ -219,11 +205,18 @@ namespace IcdControl.Client
             {
                 var newStruct = new Struct { Name = "nested_struct" };
                 parentStruct.Fields.Add(newStruct);
-
                 RefreshTree();
-
-                // Keep the parent expanded
                 RestoreSelection(parentStruct);
+            }
+        }
+
+        private void Ctx_AddNewItem_Click(object sender, RoutedEventArgs e)
+        {
+            if (IcdTree.SelectedItem is TreeViewItem item)
+            {
+                string tag = item.Tag as string;
+                if (tag == "MessagesRoot") AddMessageBtn_Click(sender, e);
+                if (tag == "StructsRoot") AddStructBtn_Click(sender, e);
             }
         }
 
@@ -234,14 +227,11 @@ namespace IcdControl.Client
                 if (field is Struct structToDelete)
                 {
                     bool isRoot = _icd.Structs.Contains(structToDelete);
-                    if (isRoot)
+                    if (isRoot && IsStructUsed(structToDelete.Name))
                     {
-                        if (IsStructUsed(structToDelete.Name))
-                        {
-                            MessageBox.Show($"Cannot delete '{structToDelete.Name}' because it is being used inside other Messages or Structs.",
-                                            "Deletion Blocked", MessageBoxButton.OK, MessageBoxImage.Warning);
-                            return;
-                        }
+                        MessageBox.Show($"Cannot delete '{structToDelete.Name}' because it is being used inside other Messages or Structs.",
+                                        "Deletion Blocked", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
                     }
                 }
 
@@ -250,8 +240,6 @@ namespace IcdControl.Client
                 EditorPanel.Visibility = Visibility.Hidden;
             }
         }
-
-        // ... (Other methods remain largely the same, included for completeness) ...
 
         private bool RemoveField(object context, BaseField toRemove)
         {
@@ -305,8 +293,6 @@ namespace IcdControl.Client
             return false;
         }
 
-        private void Ctx_AddNewItem_Click(object sender, RoutedEventArgs e) { }
-
         // ---------------------------------------------------------
         // 3. Property Editing
         // ---------------------------------------------------------
@@ -325,7 +311,10 @@ namespace IcdControl.Client
                 {
                     FieldPropsPanel.Visibility = Visibility.Visible;
                     StructLinkPanel.Visibility = Visibility.Collapsed;
+
                     PropTypeCombo.SelectedItem = df.Type;
+                    PropSizeTxt.Text = df.SizeInBits.ToString();
+
                     PropIsUnionChk.Visibility = Visibility.Collapsed;
                 }
                 else if (field is Struct s)
@@ -416,10 +405,7 @@ namespace IcdControl.Client
             if (!_isLoading && _selectedField != null)
             {
                 _selectedField.Name = PropNameTxt.Text;
-                if (IcdTree.SelectedItem is TreeViewItem selectedItem)
-                {
-                    UpdateTreeHeader(selectedItem, _selectedField);
-                }
+                if (IcdTree.SelectedItem is TreeViewItem selectedItem) UpdateTreeHeader(selectedItem, _selectedField);
             }
         }
 
@@ -428,9 +414,18 @@ namespace IcdControl.Client
             if (!_isLoading && _selectedField is DataField df && PropTypeCombo.SelectedItem is string type)
             {
                 df.Type = type;
-                if (IcdTree.SelectedItem is TreeViewItem selectedItem)
+                if (IcdTree.SelectedItem is TreeViewItem selectedItem) UpdateTreeHeader(selectedItem, df);
+            }
+        }
+
+        private void PropSizeTxt_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (!_isLoading && _selectedField is DataField df)
+            {
+                if (int.TryParse(PropSizeTxt.Text, out int size))
                 {
-                    UpdateTreeHeader(selectedItem, df);
+                    df.SizeInBits = size;
+                    if (IcdTree.SelectedItem is TreeViewItem selectedItem) UpdateTreeHeader(selectedItem, df);
                 }
             }
         }
@@ -440,10 +435,7 @@ namespace IcdControl.Client
             if (!_isLoading && _selectedField is Struct s && StructLinkCombo.SelectedItem is string linkedName)
             {
                 s.StructType = linkedName;
-                if (IcdTree.SelectedItem is TreeViewItem selectedItem)
-                {
-                    UpdateTreeHeader(selectedItem, s);
-                }
+                if (IcdTree.SelectedItem is TreeViewItem selectedItem) UpdateTreeHeader(selectedItem, s);
             }
         }
 
@@ -451,6 +443,10 @@ namespace IcdControl.Client
         {
             if (!_isLoading && _selectedField is Struct s) s.IsUnion = PropIsUnionChk.IsChecked == true;
         }
+
+        // ---------------------------------------------------------
+        // 4. Save & Export
+        // ---------------------------------------------------------
 
         private async void Save_Click(object sender, RoutedEventArgs e)
         {
@@ -472,17 +468,50 @@ namespace IcdControl.Client
                 else
                 {
                     var details = await res.Content.ReadAsStringAsync();
-                    if (res.StatusCode == System.Net.HttpStatusCode.Forbidden)
-                    {
-                        MessageBox.Show("You don't have permission to save changes for this ICD.");
-                        return;
-                    }
-                    MessageBox.Show($"Save failed: {(int)res.StatusCode} {res.ReasonPhrase}\n{details}");
+                    MessageBox.Show($"Save failed: {res.ReasonPhrase}\n{details}");
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Network Error: " + ex.Message);
+            }
+        }
+
+        // --- NEW: Export Logic ---
+        private async void Export_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // 1. Get the C code from server
+                ApiClient.EnsureAuthHeader();
+                var response = await ApiClient.Client.GetAsync($"api/icd/{_icdId}/export");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    MessageBox.Show("Export failed: " + response.ReasonPhrase);
+                    return;
+                }
+
+                var cHeaderContent = await response.Content.ReadAsStringAsync();
+
+                // 2. Open Save File Dialog
+                var dialog = new SaveFileDialog
+                {
+                    FileName = $"{_icd.Name}_v{_icd.Version}.h",
+                    DefaultExt = ".h",
+                    Filter = "C Header Files (*.h)|*.h|All Files (*.*)|*.*"
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    // 3. Write to file
+                    System.IO.File.WriteAllText(dialog.FileName, cHeaderContent);
+                    MessageBox.Show($"Exported successfully to:\n{dialog.FileName}");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error exporting file: {ex.Message}");
             }
         }
 

@@ -6,9 +6,10 @@
 
     <Window.Resources>
         <ContextMenu x:Key="ItemContextMenu">
-            <MenuItem Header="Delete" Click="Ctx_Delete_Click" Foreground="Red"/>
-            <Separator/>
             <MenuItem Header="Add Field" Click="Ctx_AddField_Click"/>
+            <MenuItem Header="Add Nested Struct" Click="Ctx_AddStruct_Click"/>
+            <Separator/>
+            <MenuItem Header="Delete" Click="Ctx_Delete_Click" Foreground="Red"/>
         </ContextMenu>
 
         <ContextMenu x:Key="RootContextMenu">
@@ -29,6 +30,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
+
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="ICD Name:" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryColor}" Margin="0,0,10,0"/>
                     <TextBox x:Name="NameTxt" Width="180" Margin="0,0,20,0"/>
@@ -42,6 +44,8 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button Content="Export to .h" Style="{StaticResource SecondaryBtn}" Click="Export_Click" Margin="0,0,10,0" Width="100"/>
+
                     <Button Content="Save Changes" Style="{StaticResource ModernBtn}" Click="Save_Click" Width="120"/>
                     <Button Content="Close" Style="{StaticResource SecondaryBtn}" Click="Close_Click" Margin="10,0,0,0" Width="80"/>
                 </StackPanel>
@@ -61,7 +65,6 @@
                             <Setter Property="IsExpanded" Value="True"/>
                             <Setter Property="Padding" Value="5"/>
                             <Setter Property="FontSize" Value="14"/>
-                            <Setter Property="ContextMenu" Value="{StaticResource ItemContextMenu}"/>
                         </Style>
                     </TreeView.ItemContainerStyle>
                 </TreeView>
@@ -77,11 +80,18 @@
                     <StackPanel x:Name="FieldPropsPanel" Visibility="Collapsed">
                         <TextBlock Text="Data Type" Foreground="{StaticResource TextSecondaryColor}" Margin="0,0,0,5"/>
                         <ComboBox x:Name="PropTypeCombo" Height="35" SelectionChanged="PropTypeCombo_SelectionChanged" Margin="0,0,0,15"/>
+
+                        <TextBlock Text="Size (Bits)" Foreground="{StaticResource TextSecondaryColor}" Margin="0,0,0,5"/>
+                        <TextBox x:Name="PropSizeTxt" TextChanged="PropSizeTxt_TextChanged" Margin="0,0,0,5"/>
+                        <TextBlock Text="* Set to standard size (e.g. 32 for uint32) to disable bitfield." 
+                                   FontSize="10" Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,15"/>
                     </StackPanel>
 
                     <StackPanel x:Name="StructLinkPanel" Visibility="Collapsed">
                         <TextBlock Text="Struct Type Definition" Foreground="{StaticResource TextSecondaryColor}" Margin="0,0,0,5"/>
                         <ComboBox x:Name="StructLinkCombo" Height="35" SelectionChanged="StructLinkCombo_SelectionChanged" Margin="0,0,0,15"/>
+                        <TextBlock Text="* Defines this item as an instance of the selected struct." 
+                                   FontSize="10" Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,15"/>
                     </StackPanel>
 
                     <CheckBox x:Name="PropIsUnionChk" Content="Is Union (C union)" Margin="0,5,0,0" Click="PropIsUnionChk_Changed"/>
