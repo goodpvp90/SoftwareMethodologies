@@ -83,12 +83,10 @@ C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdContro
 C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\IcdEditorWindow.baml
 C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\LoginWindow.baml
 C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\NewIcdWindow.baml
-C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\RegisterWindow.baml
 C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\IcdEditorWindow.g.cs
 C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\LoginWindow.g.cs
 C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\MainWindow.g.cs
 C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\NewIcdWindow.g.cs
-C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\RegisterWindow.g.cs
 C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\App.g.cs
 C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\IcdControl.Client_MarkupCompile.cache
 C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\IcdControl.Client_MarkupCompile.lref
