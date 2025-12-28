@@ -5,7 +5,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input; // Required for Drag & Drop
+using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Win32;
 using IcdControl.Models;
@@ -19,7 +19,6 @@ namespace IcdControl.Client
         private bool _isLoading = true;
         private BaseField _selectedField;
 
-        // --- Drag & Drop Variables ---
         private Point _dragStartPoint;
         private TreeViewItem _draggedItemContainer;
         private BaseField _draggedData;
@@ -30,7 +29,16 @@ namespace IcdControl.Client
             _icdId = icdId;
             Loaded += OnLoaded;
 
-            PropTypeCombo.ItemsSource = new string[] { "uint32_t", "int32_t", "float", "double", "uint8_t", "uint16_t", "bool", "byte" };
+            // Updated Types List
+            PropTypeCombo.ItemsSource = new string[]
+            {
+                "uint8_t", "int8_t",
+                "uint16_t", "int16_t",
+                "uint32_t", "int32_t",
+                "uint64_t", "int64_t",
+                "float", "double",
+                "bool", "char"
+            };
         }
 
         private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -64,7 +72,6 @@ namespace IcdControl.Client
         {
             IcdTree.Items.Clear();
 
-            // Root: Messages
             var msgRoot = new TreeViewItem
             {
                 Header = "Messages",
@@ -82,7 +89,6 @@ namespace IcdControl.Client
                 foreach (var m in _icd.Messages) msgRoot.Items.Add(CreateTreeItem(m));
             IcdTree.Items.Add(msgRoot);
 
-            // Root: Structs
             var structRoot = new TreeViewItem
             {
                 Header = "Structs",
@@ -107,13 +113,11 @@ namespace IcdControl.Client
             UpdateTreeHeader(item, field);
             item.ContextMenu = (ContextMenu)Resources["ItemContextMenu"];
 
-            // --- Enable Drag & Drop on every item ---
             item.AllowDrop = true;
             item.PreviewMouseLeftButtonDown += Tree_PreviewMouseLeftButtonDown;
             item.MouseMove += Tree_MouseMove;
             item.DragOver += Tree_DragOver;
             item.Drop += Tree_Drop;
-            // ----------------------------------------
 
             if (field is Struct s && s.Fields != null)
             {
@@ -130,7 +134,13 @@ namespace IcdControl.Client
             if (field is DataField df)
             {
                 header += $" : {df.Type}";
-                if (df.SizeInBits > 0) header += $" ({df.SizeInBits}b)";
+
+                // Show bits ONLY if custom size
+                int stdSize = GetStandardSize(df.Type);
+                if (df.SizeInBits > 0 && df.SizeInBits != stdSize)
+                {
+                    header += $" ({df.SizeInBits}b)";
+                }
             }
             else if (field is Struct st && !string.IsNullOrEmpty(st.StructType))
             {
@@ -179,10 +189,7 @@ namespace IcdControl.Client
         {
             var newMsg = new Message { Name = "New_Message" };
             if (_icd.Messages == null) _icd.Messages = new List<Message>();
-
-            // Ensure Unique Name on Create
             newMsg.Name = GetUniqueName(_icd.Messages.Cast<BaseField>().ToList(), newMsg.Name);
-
             _icd.Messages.Add(newMsg);
             RefreshTree();
             RestoreSelection(newMsg);
@@ -192,10 +199,7 @@ namespace IcdControl.Client
         {
             var newStruct = new Struct { Name = "New_Struct" };
             if (_icd.Structs == null) _icd.Structs = new List<Struct>();
-
-            // Ensure Unique Name on Create
             newStruct.Name = GetUniqueName(_icd.Structs.Cast<BaseField>().ToList(), newStruct.Name);
-
             _icd.Structs.Add(newStruct);
             RefreshTree();
             RestoreSelection(newStruct);
@@ -206,10 +210,7 @@ namespace IcdControl.Client
             if (IcdTree.SelectedItem is TreeViewItem item && item.Tag is Struct parentStruct)
             {
                 var newField = new DataField { Name = "new_field", Type = "uint32_t", SizeInBits = 32 };
-
-                // Ensure Unique Name
                 newField.Name = GetUniqueName(parentStruct.Fields, newField.Name);
-
                 parentStruct.Fields.Add(newField);
                 RefreshTree();
                 RestoreSelection(parentStruct);
@@ -221,10 +222,7 @@ namespace IcdControl.Client
             if (IcdTree.SelectedItem is TreeViewItem item && item.Tag is Struct parentStruct)
             {
                 var newStruct = new Struct { Name = "nested_struct" };
-
-                // Ensure Unique Name
                 newStruct.Name = GetUniqueName(parentStruct.Fields, newStruct.Name);
-
                 parentStruct.Fields.Add(newStruct);
                 RefreshTree();
                 RestoreSelection(parentStruct);
@@ -250,8 +248,7 @@ namespace IcdControl.Client
                     bool isRoot = _icd.Structs.Contains(structToDelete);
                     if (isRoot && IsStructUsed(structToDelete.Name))
                     {
-                        MessageBox.Show($"Cannot delete '{structToDelete.Name}' because it is being used inside other Messages or Structs.",
-                                        "Deletion Blocked", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        MessageBox.Show("Cannot delete struct in use.", "Blocked", MessageBoxButton.OK, MessageBoxImage.Warning);
                         return;
                     }
                 }
@@ -330,6 +327,10 @@ namespace IcdControl.Client
                     StructLinkPanel.Visibility = Visibility.Collapsed;
                     PropTypeCombo.SelectedItem = df.Type;
                     PropSizeTxt.Text = df.SizeInBits.ToString();
+
+                    // --- UPDATED: Allow size editing ONLY for unsigned types ---
+                    PropSizeTxt.IsEnabled = IsUnsignedType(df.Type);
+
                     PropIsUnionChk.Visibility = Visibility.Collapsed;
                 }
                 else if (field is Struct s)
@@ -412,11 +413,26 @@ namespace IcdControl.Client
             }
         }
 
+        // --- UPDATED LOGIC FOR TYPES ---
         private void PropTypeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!_isLoading && _selectedField is DataField df && PropTypeCombo.SelectedItem is string type)
             {
                 df.Type = type;
+
+                int stdSize = GetStandardSize(type);
+                bool isUnsigned = IsUnsignedType(type);
+
+                // If standard size found, update it
+                if (stdSize > 0)
+                {
+                    df.SizeInBits = stdSize;
+                    PropSizeTxt.Text = stdSize.ToString();
+                }
+
+                // Enable bits only if unsigned
+                PropSizeTxt.IsEnabled = isUnsigned;
+
                 if (IcdTree.SelectedItem is TreeViewItem selectedItem) UpdateTreeHeader(selectedItem, df);
             }
         }
@@ -431,6 +447,30 @@ namespace IcdControl.Client
                     if (IcdTree.SelectedItem is TreeViewItem selectedItem) UpdateTreeHeader(selectedItem, df);
                 }
             }
+        }
+
+        // --- Helpers for Types ---
+        private int GetStandardSize(string type)
+        {
+            if (string.IsNullOrEmpty(type)) return 32;
+            type = type.ToLower();
+            if (type.Contains("8")) return 8;
+            if (type.Contains("16")) return 16;
+            if (type.Contains("32")) return 32;
+            if (type.Contains("64")) return 64;
+            if (type == "bool") return 8;
+            if (type == "char") return 8;
+            if (type == "float") return 32;
+            if (type == "double") return 64;
+            return 32;
+        }
+
+        // New Helper: Only allows bitfields for unsigned integers
+        private bool IsUnsignedType(string type)
+        {
+            if (string.IsNullOrEmpty(type)) return false;
+            type = type.ToLower();
+            return type.StartsWith("uint") || type == "byte";
         }
 
         private void StructLinkCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -506,7 +546,7 @@ namespace IcdControl.Client
         private void Close_Click(object sender, RoutedEventArgs e) => Close();
 
         // ---------------------------------------------------------
-        // 5. Drag & Drop Logic (With Unique Name Check)
+        // 5. Drag & Drop Logic
         // ---------------------------------------------------------
 
         private void Tree_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -557,12 +597,8 @@ namespace IcdControl.Client
         {
             if (sender is TreeViewItem targetItem && targetItem.Tag is BaseField targetField)
             {
-                // ============================================
-                // SCENARIO A: Dropped ON A STRUCT HEADER
-                // ============================================
                 if (targetField is Struct targetStruct && IsDroppedOnHeader(targetItem, e))
                 {
-                    // 1. Link Instance
                     if (_draggedData is Struct draggedStructDef && _icd.Structs.Contains(draggedStructDef))
                     {
                         string baseName = draggedStructDef.Name.ToLower() + "_instance";
@@ -575,12 +611,9 @@ namespace IcdControl.Client
                         RefreshTree();
                         RestoreSelection(targetStruct);
                     }
-                    // 2. DataField -> Copy/Duplicate
                     else if (_draggedData is DataField draggedField)
                     {
-                        // Use original name as base, then uniquify
                         string baseName = draggedField.Name;
-
                         var copy = new DataField
                         {
                             Name = GetUniqueName(targetStruct.Fields, baseName),
@@ -592,9 +625,6 @@ namespace IcdControl.Client
                         RestoreSelection(targetStruct);
                     }
                 }
-                // ============================================
-                // SCENARIO B: Dropped ON A CHILD (Reorder / Insert)
-                // ============================================
                 else
                 {
                     var targetParent = FindParentField(_icd, targetField);
@@ -619,35 +649,24 @@ namespace IcdControl.Client
                         RestoreSelection(targetParent);
                     }
                 }
-
                 e.Handled = true;
             }
         }
 
-        // --- NEW HELPER: Get Unique Name (e.g., field, field_2, field_3) ---
         private string GetUniqueName(List<BaseField> fields, string baseName)
         {
             if (fields == null) return baseName;
-
-            // 1. Try base name
-            if (!fields.Any(f => f.Name == baseName))
-                return baseName;
-
-            // 2. Try adding suffix numbers
+            if (!fields.Any(f => f.Name == baseName)) return baseName;
             int i = 2;
             while (true)
             {
                 string candidate = $"{baseName}_{i}";
-                if (!fields.Any(f => f.Name == candidate))
-                    return candidate;
+                if (!fields.Any(f => f.Name == candidate)) return candidate;
                 i++;
             }
         }
 
-        private bool IsDroppedOnHeader(TreeViewItem item, DragEventArgs e)
-        {
-            return true; // Simplified for this logic
-        }
+        private bool IsDroppedOnHeader(TreeViewItem item, DragEventArgs e) => true;
 
         private Struct FindParentField(object context, BaseField child)
         {
