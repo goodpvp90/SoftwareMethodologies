@@ -178,3 +178,6 @@ C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdContr
 C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\App.baml
 C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\AdminPermissionsWindow.baml
 C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\AdminPermissionsWindow.g.cs
+C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\AdminPermissionsWindow.baml
+C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\App.baml
+C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\AdminPermissionsWindow.g.cs

@@ -5,6 +5,7 @@ using System.Net.Http.Json;
 using System.Net;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media; // Required for VisualTreeHelper
 using IcdControl.Models;
 
 namespace IcdControl.Client
@@ -15,13 +16,16 @@ namespace IcdControl.Client
         private Icd _icd;
         private bool _isLoading = true;
 
+        // Track selected field for property editing
+        private BaseField _selectedField;
+
         public IcdEditorWindow(string icdId)
         {
             InitializeComponent();
             _icdId = icdId;
             Loaded += OnLoaded;
 
-            PropTypeCombo.ItemsSource = new string[] { "uint32_t", "int32_t", "float", "double", "uint8_t", "uint16_t", "bool" };
+            PropTypeCombo.ItemsSource = new string[] { "uint32_t", "int32_t", "float", "double", "uint8_t", "uint16_t", "bool", "byte" };
         }
 
         private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -47,11 +51,15 @@ namespace IcdControl.Client
             }
         }
 
+        // ---------------------------------------------------------
+        // 1. Tree Management
+        // ---------------------------------------------------------
+
         private void RefreshTree()
         {
             IcdTree.Items.Clear();
 
-            // Messages
+            // Messages Root
             var msgRoot = new TreeViewItem { Header = "Messages", FontWeight = FontWeights.Bold, Tag = "MessagesRoot" };
             msgRoot.ContextMenu = new ContextMenu();
             var addMsg = new MenuItem { Header = "Add New Message" };
@@ -64,7 +72,7 @@ namespace IcdControl.Client
             }
             IcdTree.Items.Add(msgRoot);
 
-            // Structs
+            // Structs Root
             var structRoot = new TreeViewItem { Header = "Structs", FontWeight = FontWeights.Bold, Tag = "StructsRoot" };
             structRoot.ContextMenu = new ContextMenu();
             var addStruct = new MenuItem { Header = "Add New Struct" };
@@ -80,13 +88,64 @@ namespace IcdControl.Client
 
         private TreeViewItem CreateTreeItem(BaseField field)
         {
-            var item = new TreeViewItem { Header = field.Name, Tag = field };
+            // Display name + struct type if it exists
+            string header = field.Name;
+            if (field is Struct st && !string.IsNullOrEmpty(st.StructType))
+            {
+                header += $" ({st.StructType})";
+            }
+
+            var item = new TreeViewItem { Header = header, Tag = field };
+
+            // Add Context Menu
+            var ctx = new ContextMenu();
+
+            if (field is Struct)
+            {
+                var addF = new MenuItem { Header = "Add Field" };
+                addF.Click += Ctx_AddField_Click;
+                ctx.Items.Add(addF);
+
+                var addS = new MenuItem { Header = "Add Nested Struct" };
+                addS.Click += Ctx_AddStruct_Click;
+                ctx.Items.Add(addS);
+
+                ctx.Items.Add(new Separator());
+            }
+
+            var del = new MenuItem { Header = "Delete", Foreground = Brushes.Red };
+            del.Click += Ctx_Delete_Click;
+            ctx.Items.Add(del);
+
+            item.ContextMenu = ctx;
+
+            // Recursively add children
             if (field is Struct s && s.Fields != null)
             {
                 foreach (var child in s.Fields) item.Items.Add(CreateTreeItem(child));
             }
             return item;
         }
+
+        // --- NEW HELPER: Updates the visual header of a tree item ---
+        private void UpdateTreeHeader(TreeViewItem item, BaseField field)
+        {
+            if (item == null || field == null) return;
+
+            string header = field.Name;
+
+            // If it's a struct with a linked type, append it
+            if (field is Struct st && !string.IsNullOrEmpty(st.StructType))
+            {
+                header += $" ({st.StructType})";
+            }
+
+            item.Header = header;
+        }
+
+        // ---------------------------------------------------------
+        // 2. Add / Delete Logic (With Validation)
+        // ---------------------------------------------------------
 
         private void AddMessageBtn_Click(object sender, RoutedEventArgs e)
         {
@@ -108,6 +167,23 @@ namespace IcdControl.Client
         {
             if (IcdTree.SelectedItem is TreeViewItem item && item.Tag is BaseField field)
             {
+                // --- VALIDATION: Prevent deleting structs that are in use ---
+                if (field is Struct structToDelete)
+                {
+                    // Check if this is a root definition
+                    bool isRoot = _icd.Structs.Contains(structToDelete);
+                    if (isRoot)
+                    {
+                        if (IsStructUsed(structToDelete.Name))
+                        {
+                            MessageBox.Show($"Cannot delete '{structToDelete.Name}' because it is being used inside other Messages or Structs.",
+                                            "Deletion Blocked", MessageBoxButton.OK, MessageBoxImage.Warning);
+                            return;
+                        }
+                    }
+                }
+                // -----------------------------------------------------------
+
                 RemoveField(_icd, field);
                 RefreshTree();
                 EditorPanel.Visibility = Visibility.Hidden;
@@ -138,6 +214,35 @@ namespace IcdControl.Client
             return false;
         }
 
+        // Helper: Check if a struct name is used anywhere in the system
+        private bool IsStructUsed(string structName)
+        {
+            foreach (var msg in _icd.Messages)
+            {
+                if (CheckFieldsForUsage(msg.Fields, structName)) return true;
+            }
+            foreach (var st in _icd.Structs)
+            {
+                if (st.Name == structName) continue; // Don't check itself
+                if (CheckFieldsForUsage(st.Fields, structName)) return true;
+            }
+            return false;
+        }
+
+        private bool CheckFieldsForUsage(List<BaseField> fields, string targetStructName)
+        {
+            if (fields == null) return false;
+            foreach (var f in fields)
+            {
+                if (f is Struct st)
+                {
+                    if (st.StructType == targetStructName) return true;
+                    if (CheckFieldsForUsage(st.Fields, targetStructName)) return true;
+                }
+            }
+            return false;
+        }
+
         private void Ctx_AddField_Click(object sender, RoutedEventArgs e)
         {
             if (IcdTree.SelectedItem is TreeViewItem item && item.Tag is Struct parentStruct)
@@ -145,16 +250,14 @@ namespace IcdControl.Client
                 var newField = new DataField { Name = "new_field", Type = "uint32_t", SizeInBits = 32 };
                 parentStruct.Fields.Add(newField);
                 RefreshTree();
-                // Expand item to show new field
-                item.IsExpanded = true;
-            }
-            else
-            {
-                MessageBox.Show("Select a Message or Struct to add a field to.");
+
+                // Note: RefreshTree rebuilds the tree, so 'item' is disconnected. 
+                // We don't re-select automatically here to keep it simple.
             }
         }
 
         private void Ctx_AddNewItem_Click(object sender, RoutedEventArgs e) { }
+
         private void Ctx_AddStruct_Click(object sender, RoutedEventArgs e)
         {
             if (IcdTree.SelectedItem is TreeViewItem item && item.Tag is Struct parentStruct)
@@ -162,12 +265,13 @@ namespace IcdControl.Client
                 var newStruct = new Struct { Name = "nested_struct" };
                 parentStruct.Fields.Add(newStruct);
                 RefreshTree();
-                item.IsExpanded = true;
             }
         }
 
-        // Properties logic
-        private BaseField _selectedField;
+        // ---------------------------------------------------------
+        // 3. Property Editing & Circular Dependency Protection
+        // ---------------------------------------------------------
+
         private void IcdTree_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
         {
             if (e.NewValue is TreeViewItem item && item.Tag is BaseField field)
@@ -188,9 +292,26 @@ namespace IcdControl.Client
                 else if (field is Struct s)
                 {
                     FieldPropsPanel.Visibility = Visibility.Collapsed;
-                    StructLinkPanel.Visibility = Visibility.Collapsed;
-                    PropIsUnionChk.Visibility = Visibility.Visible;
-                    PropIsUnionChk.IsChecked = s.IsUnion;
+
+                    // Distinguish between Root Struct (Definition) and Nested Struct (Instance)
+                    bool isRoot = _icd.Structs.Contains(s) || _icd.Messages.Contains(s as Message);
+
+                    if (isRoot)
+                    {
+                        // Root definition: Can set Union, cannot link to another struct
+                        StructLinkPanel.Visibility = Visibility.Collapsed;
+                        PropIsUnionChk.Visibility = Visibility.Visible;
+                        PropIsUnionChk.IsChecked = s.IsUnion;
+                    }
+                    else
+                    {
+                        // Nested Instance: Can link to a definition, cannot change Union status (inherits)
+                        StructLinkPanel.Visibility = Visibility.Visible;
+                        UpdateStructLinkList(item); // Circular check happens here
+                        StructLinkCombo.SelectedItem = s.StructType;
+
+                        PropIsUnionChk.Visibility = Visibility.Collapsed;
+                    }
                 }
                 _isLoading = false;
             }
@@ -200,18 +321,104 @@ namespace IcdControl.Client
             }
         }
 
+        // Populate the combo box, filtering out any struct that would cause a loop
+        private void UpdateStructLinkList(TreeViewItem currentItem)
+        {
+            string rootParentName = GetRootParentName(currentItem);
+            var validStructs = new List<string>();
+
+            foreach (var candidate in _icd.Structs)
+            {
+                // 1. Direct recursion check
+                if (candidate.Name == rootParentName) continue;
+
+                // 2. Indirect recursion check
+                if (IsStructReferencing(candidate.Name, rootParentName, new HashSet<string>())) continue;
+
+                validStructs.Add(candidate.Name);
+            }
+
+            StructLinkCombo.ItemsSource = validStructs.OrderBy(n => n).ToList();
+        }
+
+        // Check if checkingStructName eventually points to targetStructName
+        private bool IsStructReferencing(string checkingStructName, string targetStructName, HashSet<string> visited)
+        {
+            if (visited.Contains(checkingStructName)) return false;
+            visited.Add(checkingStructName);
+
+            var definition = _icd.Structs.FirstOrDefault(s => s.Name == checkingStructName);
+            if (definition == null || definition.Fields == null) return false;
+
+            foreach (var field in definition.Fields)
+            {
+                if (field is Struct st)
+                {
+                    if (st.StructType == targetStructName) return true;
+                    if (!string.IsNullOrEmpty(st.StructType))
+                    {
+                        if (IsStructReferencing(st.StructType, targetStructName, visited)) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        // Walk up the visual tree to find which Root Struct/Message we are editing
+        private string GetRootParentName(TreeViewItem item)
+        {
+            DependencyObject curr = item;
+            while (curr != null)
+            {
+                if (curr is TreeViewItem tvi && tvi.Tag is BaseField bf)
+                {
+                    // If this item is directly in the Structs or Messages list of the ICD
+                    if (_icd.Structs.Contains(bf) || _icd.Messages.Contains(bf as Message))
+                        return bf.Name;
+                }
+                curr = VisualTreeHelper.GetParent(curr);
+            }
+            return null;
+        }
+
+        // --- UPDATED: PropNameTxt_TextChanged calls UpdateTreeHeader ---
         private void PropNameTxt_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (!_isLoading && _selectedField != null) _selectedField.Name = PropNameTxt.Text;
+            if (!_isLoading && _selectedField != null)
+            {
+                _selectedField.Name = PropNameTxt.Text;
+
+                // Real-time Visual Update
+                if (IcdTree.SelectedItem is TreeViewItem selectedItem)
+                {
+                    UpdateTreeHeader(selectedItem, _selectedField);
+                }
+            }
         }
 
         private void PropTypeCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!_isLoading && _selectedField is DataField df && PropTypeCombo.SelectedItem is string type)
+            {
                 df.Type = type;
+                // Note: We don't show type in header currently, but if we did, we'd call UpdateTreeHeader here too.
+            }
         }
 
-        private void StructLinkCombo_SelectionChanged(object sender, SelectionChangedEventArgs e) { }
+        // --- UPDATED: StructLinkCombo calls UpdateTreeHeader ---
+        private void StructLinkCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!_isLoading && _selectedField is Struct s && StructLinkCombo.SelectedItem is string linkedName)
+            {
+                s.StructType = linkedName;
+
+                // Real-time Visual Update (to show the new type in parens)
+                if (IcdTree.SelectedItem is TreeViewItem selectedItem)
+                {
+                    UpdateTreeHeader(selectedItem, s);
+                }
+            }
+        }
 
         private void PropIsUnionChk_Changed(object sender, RoutedEventArgs e)
         {
@@ -223,29 +430,32 @@ namespace IcdControl.Client
             _icd.Name = NameTxt.Text;
             if (double.TryParse(VersionTxt.Text, out var v)) _icd.Version = v;
 
-            // Ensure auth header is present for this request
             ApiClient.EnsureAuthHeader();
 
-            // Guard against null collections so serialization stays consistent
             _icd.Messages ??= new List<Message>();
             _icd.Structs ??= new List<Struct>();
 
-            // This call should now work correctly because the infinite recursion in serialization is fixed in Entities.cs
-            var res = await ApiClient.Client.PostAsJsonAsync("api/icd/save", _icd);
-            if (res.IsSuccessStatusCode)
+            try
             {
-                MessageBox.Show("Saved successfully!");
-            }
-            else
-            {
-                var details = await res.Content.ReadAsStringAsync();
-                if (res.StatusCode == HttpStatusCode.Forbidden)
+                var res = await ApiClient.Client.PostAsJsonAsync("api/icd/save", _icd);
+                if (res.IsSuccessStatusCode)
                 {
-                    MessageBox.Show("You don't have permission to save changes for this ICD.");
-                    return;
+                    MessageBox.Show("Saved successfully!");
                 }
-
-                MessageBox.Show($"Save failed: {(int)res.StatusCode} {res.ReasonPhrase}\n{details}");
+                else
+                {
+                    var details = await res.Content.ReadAsStringAsync();
+                    if (res.StatusCode == HttpStatusCode.Forbidden)
+                    {
+                        MessageBox.Show("You don't have permission to save changes for this ICD.");
+                        return;
+                    }
+                    MessageBox.Show($"Save failed: {(int)res.StatusCode} {res.ReasonPhrase}\n{details}");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Network Error: " + ex.Message);
             }
         }
 

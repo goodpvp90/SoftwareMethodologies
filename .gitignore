@@ -12,3 +12,4 @@
 ## Other ##
 .DS_Store
 Thumbs.db
+/IcdControlSystem/IcdControl.Client/obj
