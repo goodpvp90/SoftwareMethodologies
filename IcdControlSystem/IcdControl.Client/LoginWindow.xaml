@@ -1,14 +1,90 @@
 ﻿<Window x:Class="IcdControl.Client.LoginWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Login" Height="320" Width="320" WindowStartupLocation="CenterScreen">
-    <StackPanel Margin="20" VerticalAlignment="Center">
-        <TextBlock Text="ICD System Login" FontSize="20" Margin="0,0,0,12" HorizontalAlignment="Center"/>
-        <TextBox x:Name="EmailTxt" Margin="0,5" Tag="Email"/>
-        <PasswordBox x:Name="PassBox" Margin="0,5" />
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" Margin="0,12,0,0">
-            <Button Content="Login" Click="Login_Click" Height="35" Width="160" Background="#007ACC" Foreground="White"/>
-            <Button Content="Register" Click="OpenRegister_Click" Height="35" Width="100" Margin="8,0,0,0"/>
-        </StackPanel>
-    </StackPanel>
+        Title="ICD System Access" Height="450" Width="400"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize" WindowStyle="None" AllowsTransparency="True" Background="Transparent">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="PrimaryColor" Color="#2563EB"/>
+        <SolidColorBrush x:Key="PrimaryHoverColor" Color="#1D4ED8"/>
+
+        <Style TargetType="Button" x:Key="ModernBtn">
+            <Setter Property="Background" Value="{StaticResource PrimaryColor}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource PrimaryHoverColor}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderBrush" Value="#E5E7EB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <Style TargetType="PasswordBox">
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderBrush" Value="#E5E7EB"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+    </Window.Resources>
+
+    <Border CornerRadius="12" Background="#F3F4F6">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="20" ShadowDepth="5" Opacity="0.2" Color="Black"/>
+        </Border.Effect>
+
+        <Grid>
+            <Button Content="✕" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="15"
+                    Background="Transparent" Foreground="Gray" BorderThickness="0" 
+                    FontSize="16" Cursor="Hand" Click="CloseApp_Click"/>
+
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="300">
+
+                <TextBlock Text="Welcome Back" FontSize="26" FontWeight="Bold" Foreground="#111827" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                <TextBlock Text="Sign in to ICD Control System" FontSize="14" Foreground="#6B7280" HorizontalAlignment="Center" Margin="0,0,0,30"/>
+
+                <TextBlock Text="Username" Foreground="#374151" FontWeight="Medium" Margin="0,0,0,5"/>
+                <Border CornerRadius="6" BorderThickness="1" BorderBrush="#D1D5DB" Background="White" Margin="0,0,0,15">
+                    <TextBox x:Name="UsernameTxt" BorderThickness="0" Background="Transparent"/>
+                </Border>
+
+                <TextBlock Text="Password" Foreground="#374151" FontWeight="Medium" Margin="0,0,0,5"/>
+                <Border CornerRadius="6" BorderThickness="1" BorderBrush="#D1D5DB" Background="White" Margin="0,0,0,20">
+                    <PasswordBox x:Name="PassBox" BorderThickness="0" Background="Transparent" KeyDown="PassBox_KeyDown"/>
+                </Border>
+
+                <Button Content="Sign In" Click="Login_Click" Style="{StaticResource ModernBtn}" Height="45"/>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
+                    <TextBlock Text="Don't have an account?" Foreground="#6B7280"/>
+                    <Button Content="Register" Click="OpenRegister_Click" 
+                            Background="Transparent" Foreground="{StaticResource PrimaryColor}" 
+                            BorderThickness="0" FontWeight="Bold" Cursor="Hand" Margin="5,0,0,0"/>
+                </StackPanel>
+
+            </StackPanel>
+        </Grid>
+    </Border>
 </Window>
