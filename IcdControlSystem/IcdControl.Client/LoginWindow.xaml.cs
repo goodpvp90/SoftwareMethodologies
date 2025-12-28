@@ -27,13 +27,37 @@ namespace IcdControl.Client
             Application.Current.Shutdown();
         }
 
+        // --- Helpers to Manage Errors ---
+
+        private void ClearErrors()
+        {
+            LoginErrorTxt.Text = "";
+            LoginErrorTxt.Visibility = Visibility.Collapsed;
+
+            RegErrorTxt.Text = "";
+            RegErrorTxt.Visibility = Visibility.Collapsed;
+        }
+
+        private void ShowLoginError(string message)
+        {
+            LoginErrorTxt.Text = message;
+            LoginErrorTxt.Visibility = Visibility.Visible;
+        }
+
+        private void ShowRegError(string message)
+        {
+            RegErrorTxt.Text = message;
+            RegErrorTxt.Visibility = Visibility.Visible;
+        }
+
         // --- Switching Views ---
 
         private void SwitchToRegister_Click(object sender, RoutedEventArgs e)
         {
+            ClearErrors(); // Clear previous errors
             LoginPanel.Visibility = Visibility.Collapsed;
             RegisterPanel.Visibility = Visibility.Visible;
-            // Clear fields optionally
+
             RegUsernameTxt.Text = "";
             RegEmailTxt.Text = "";
             RegPassBox.Password = "";
@@ -42,6 +66,7 @@ namespace IcdControl.Client
 
         private void SwitchToLogin_Click(object sender, RoutedEventArgs e)
         {
+            ClearErrors(); // Clear previous errors
             RegisterPanel.Visibility = Visibility.Collapsed;
             LoginPanel.Visibility = Visibility.Visible;
         }
@@ -50,12 +75,14 @@ namespace IcdControl.Client
 
         private async void Login_Click(object sender, RoutedEventArgs e)
         {
+            ClearErrors(); // Reset error state
+
             var username = LoginUsernameTxt.Text;
             var pass = LoginPassBox.Password;
 
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(pass))
             {
-                MessageBox.Show("Please enter both username and password.");
+                ShowLoginError("Please enter both username and password.");
                 return;
             }
 
@@ -75,12 +102,19 @@ namespace IcdControl.Client
                 }
                 else
                 {
-                    MessageBox.Show($"Login Failed: {res.ReasonPhrase}");
+                    // Read custom error from server if possible, else generic
+                    string errorMsg = "Invalid username or password.";
+                    if (res.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                        errorMsg = "Incorrect credentials.";
+                    else
+                        errorMsg = $"Login failed: {res.ReasonPhrase}";
+
+                    ShowLoginError(errorMsg);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Connection Error: {ex.Message}");
+                ShowLoginError("Could not connect to server.\nIs it running?");
             }
         }
 
@@ -89,24 +123,26 @@ namespace IcdControl.Client
             if (e.Key == Key.Enter) Login_Click(sender, e);
         }
 
-        // --- Register Logic (Integrated) ---
+        // --- Register Logic ---
 
         private async void Register_Click(object sender, RoutedEventArgs e)
         {
+            ClearErrors(); // Reset error state
+
             var username = RegUsernameTxt.Text?.Trim();
             var email = RegEmailTxt.Text?.Trim();
             var pass = RegPassBox.Password;
             var confirm = RegConfirmPassBox.Password;
 
-            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(pass))
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(pass))
             {
-                MessageBox.Show("Please provide email and password.");
+                ShowRegError("All fields are required.");
                 return;
             }
 
             if (pass != confirm)
             {
-                MessageBox.Show("Passwords do not match.");
+                ShowRegError("Passwords do not match.");
                 return;
             }
 
@@ -117,24 +153,22 @@ namespace IcdControl.Client
 
                 if (res.IsSuccessStatusCode)
                 {
-                    MessageBox.Show("Registration successful. You can now log in.");
-                    // Auto switch back to login
+                    MessageBox.Show("Registration successful! Please log in."); // Keep popup only for success
                     SwitchToLogin_Click(sender, e);
-                    // Optional: pre-fill login username
                     LoginUsernameTxt.Text = username;
                 }
                 else if (res.StatusCode == System.Net.HttpStatusCode.Conflict)
                 {
-                    MessageBox.Show("Email or Username already registered.");
+                    ShowRegError("Username or Email already exists.");
                 }
                 else
                 {
-                    MessageBox.Show($"Server returned {(int)res.StatusCode} {res.ReasonPhrase}");
+                    ShowRegError($"Registration failed: {res.ReasonPhrase}");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Request failed: {ex.Message}");
+                ShowRegError("Could not connect to server.");
             }
         }
     }
