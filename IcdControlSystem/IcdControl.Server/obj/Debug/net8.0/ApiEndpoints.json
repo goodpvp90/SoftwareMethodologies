@@ -17,8 +17,151 @@
   },
   {
     "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "AddComment",
+    "RelativePath": "api/Icd/{id}/comments",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "req",
+        "Type": "IcdControl.Server.Controllers.IcdController\u002BCommentRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "GetComments",
+    "RelativePath": "api/Icd/{id}/comments",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
     "Method": "Export",
     "RelativePath": "api/Icd/{id}/export",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "format",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "ExportPdf",
+    "RelativePath": "api/Icd/{id}/export/pdf",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "GetHistory",
+    "RelativePath": "api/Icd/{id}/history",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "RollbackToVersion",
+    "RelativePath": "api/Icd/{id}/rollback",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "req",
+        "Type": "IcdControl.Server.Controllers.IcdController\u002BRollbackRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "GetStats",
+    "RelativePath": "api/Icd/{id}/stats",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "Validate",
+    "RelativePath": "api/Icd/{id}/validate",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "GetVersions",
+    "RelativePath": "api/Icd/{id}/versions",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
@@ -65,9 +208,93 @@
   },
   {
     "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "GetUser",
+    "RelativePath": "api/Icd/admin/user/{userId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "UpdateUserEmail",
+    "RelativePath": "api/Icd/admin/user/{userId}/email",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "req",
+        "Type": "IcdControl.Server.Controllers.IcdController\u002BUpdateEmailRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "UpdateUserPassword",
+    "RelativePath": "api/Icd/admin/user/{userId}/password",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "req",
+        "Type": "IcdControl.Server.Controllers.IcdController\u002BUpdatePasswordRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "GetUserPermissions",
+    "RelativePath": "api/Icd/admin/user/{userId}/permissions",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "userId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
     "Method": "GetUsers",
     "RelativePath": "api/Icd/admin/users",
     "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "ImportFromC",
+    "RelativePath": "api/Icd/import/c",
+    "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [],
@@ -101,6 +328,22 @@
   },
   {
     "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "Preview",
+    "RelativePath": "api/Icd/preview",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "req",
+        "Type": "IcdControl.Server.Controllers.IcdController\u002BPreviewRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
     "Method": "Register",
     "RelativePath": "api/Icd/register",
     "HttpMethod": "POST",
@@ -123,6 +366,116 @@
     "IsController": true,
     "Order": 0,
     "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "Search",
+    "RelativePath": "api/Icd/search",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "query",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "minVersion",
+        "Type": "System.Nullable\u00601[[System.Double, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      },
+      {
+        "Name": "maxVersion",
+        "Type": "System.Nullable\u00601[[System.Double, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "GetSettings",
+    "RelativePath": "api/Icd/settings",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "SaveSettings",
+    "RelativePath": "api/Icd/settings",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "req",
+        "Type": "IcdControl.Server.Controllers.IcdController\u002BSettingsRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "SaveTemplate",
+    "RelativePath": "api/Icd/template",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "req",
+        "Type": "IcdControl.Server.Controllers.IcdController\u002BTemplateRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "GetTemplate",
+    "RelativePath": "api/Icd/template/{templateId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "templateId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "GetTemplates",
+    "RelativePath": "api/Icd/templates",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "IcdControl.Server.Controllers.IcdController",
+    "Method": "GetVersion",
+    "RelativePath": "api/Icd/version/{versionId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "versionId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
     "ReturnTypes": []
   },
   {

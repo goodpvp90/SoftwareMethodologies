@@ -30,6 +30,40 @@ namespace IcdControl.Server.Data
             cmd3.CommandText = "CREATE TABLE IF NOT EXISTS UserIcdPermissions (UserId TEXT, IcdId TEXT, CanEdit INTEGER, PRIMARY KEY(UserId, IcdId))";
             cmd3.ExecuteNonQuery();
 
+            // Version History
+            using var cmd4 = c.CreateCommand();
+            cmd4.CommandText = "CREATE TABLE IF NOT EXISTS IcdVersions (VersionId TEXT PRIMARY KEY, IcdId TEXT, VersionNumber REAL, StructureContent TEXT, CreatedAt TEXT, CreatedBy TEXT)";
+            cmd4.ExecuteNonQuery();
+
+            // Comments
+            using var cmd5 = c.CreateCommand();
+            cmd5.CommandText = "CREATE TABLE IF NOT EXISTS IcdComments (CommentId TEXT PRIMARY KEY, IcdId TEXT, UserId TEXT, CommentText TEXT, CreatedAt TEXT)";
+            cmd5.ExecuteNonQuery();
+
+            // Change History
+            using var cmd6 = c.CreateCommand();
+            cmd6.CommandText = "CREATE TABLE IF NOT EXISTS IcdChangeHistory (ChangeId TEXT PRIMARY KEY, IcdId TEXT, UserId TEXT, ChangeType TEXT, ChangeDescription TEXT, CreatedAt TEXT)";
+            cmd6.ExecuteNonQuery();
+
+            // User Settings
+            using var cmd7 = c.CreateCommand();
+            cmd7.CommandText = "CREATE TABLE IF NOT EXISTS UserSettings (UserId TEXT PRIMARY KEY, DarkMode INTEGER, Language TEXT, Theme TEXT)";
+            cmd7.ExecuteNonQuery();
+
+            // ICD Templates
+            using var cmd8 = c.CreateCommand();
+            cmd8.CommandText = "CREATE TABLE IF NOT EXISTS IcdTemplates (TemplateId TEXT PRIMARY KEY, Name TEXT, Description TEXT, StructureContent TEXT, CreatedBy TEXT, CreatedAt TEXT)";
+            cmd8.ExecuteNonQuery();
+
+            // Add CreatedAt to Icds if not exists
+            try
+            {
+                using var cmd9 = c.CreateCommand();
+                cmd9.CommandText = "ALTER TABLE Icds ADD COLUMN CreatedAt TEXT";
+                cmd9.ExecuteNonQuery();
+            }
+            catch { } // Column might already exist
+
             EnsureAdminUser(c);
         }
 
@@ -136,17 +170,24 @@ namespace IcdControl.Server.Data
             return true;
         }
 
-        public void SaveIcdRaw(string icdId, string name, double version, string structureContentJson)
+        public void SaveIcdRaw(string icdId, string name, double version, string structureContentJson, string? userId = null)
         {
             using var c = new SqliteConnection(_conn);
             c.Open();
             using var cmd = c.CreateCommand();
-            cmd.CommandText = @"INSERT OR REPLACE INTO Icds (IcdId, Name, Version, StructureContent) VALUES ($id, $n, $v, $s)";
+            cmd.CommandText = @"INSERT OR REPLACE INTO Icds (IcdId, Name, Version, StructureContent, CreatedAt) VALUES ($id, $n, $v, $s, COALESCE((SELECT CreatedAt FROM Icds WHERE IcdId = $id), $t))";
             cmd.Parameters.AddWithValue("$id", icdId);
             cmd.Parameters.AddWithValue("$n", name ?? "ICD");
             cmd.Parameters.AddWithValue("$v", version);
             cmd.Parameters.AddWithValue("$s", structureContentJson ?? "{}");
+            cmd.Parameters.AddWithValue("$t", DateTime.UtcNow.ToString("O"));
             cmd.ExecuteNonQuery();
+
+            // Save version history
+            if (!string.IsNullOrEmpty(userId))
+            {
+                SaveIcdVersion(icdId, version, structureContentJson ?? "{}", userId);
+            }
         }
 
         public List<Icd> GetIcdsForUser(string userId)
@@ -392,6 +433,193 @@ namespace IcdControl.Server.Data
             cmd.Parameters.AddWithValue("$u", userId);
             cmd.Parameters.AddWithValue("$i", icdId);
             cmd.ExecuteNonQuery();
+        }
+
+        // Version History
+        public void SaveIcdVersion(string icdId, double versionNumber, string structureContentJson, string userId)
+        {
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = "INSERT INTO IcdVersions (VersionId, IcdId, VersionNumber, StructureContent, CreatedAt, CreatedBy) VALUES ($vid, $id, $vn, $s, $t, $u)";
+            cmd.Parameters.AddWithValue("$vid", Guid.NewGuid().ToString());
+            cmd.Parameters.AddWithValue("$id", icdId);
+            cmd.Parameters.AddWithValue("$vn", versionNumber);
+            cmd.Parameters.AddWithValue("$s", structureContentJson);
+            cmd.Parameters.AddWithValue("$t", DateTime.UtcNow.ToString("O"));
+            cmd.Parameters.AddWithValue("$u", userId);
+            cmd.ExecuteNonQuery();
+        }
+
+        public List<(string VersionId, double VersionNumber, string CreatedAt, string CreatedBy)> GetIcdVersions(string icdId)
+        {
+            var list = new List<(string, double, string, string)>();
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = "SELECT VersionId, VersionNumber, CreatedAt, CreatedBy FROM IcdVersions WHERE IcdId = $id ORDER BY VersionNumber DESC";
+            cmd.Parameters.AddWithValue("$id", icdId);
+            using var r = cmd.ExecuteReader();
+            while (r.Read())
+            {
+                list.Add((r.GetString(0), r.GetDouble(1), r.IsDBNull(2) ? "" : r.GetString(2), r.IsDBNull(3) ? "" : r.GetString(3)));
+            }
+            return list;
+        }
+
+        public Icd? GetIcdVersion(string versionId)
+        {
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = "SELECT StructureContent FROM IcdVersions WHERE VersionId = $vid";
+            cmd.Parameters.AddWithValue("$vid", versionId);
+            using var r = cmd.ExecuteReader();
+            if (r.Read())
+            {
+                var content = r.GetString(0);
+                return JsonSerializer.Deserialize<Icd>(content);
+            }
+            return null;
+        }
+
+        // Comments
+        public void AddComment(string icdId, string userId, string commentText)
+        {
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = "INSERT INTO IcdComments (CommentId, IcdId, UserId, CommentText, CreatedAt) VALUES ($cid, $id, $u, $t, $at)";
+            cmd.Parameters.AddWithValue("$cid", Guid.NewGuid().ToString());
+            cmd.Parameters.AddWithValue("$id", icdId);
+            cmd.Parameters.AddWithValue("$u", userId);
+            cmd.Parameters.AddWithValue("$t", commentText);
+            cmd.Parameters.AddWithValue("$at", DateTime.UtcNow.ToString("O"));
+            cmd.ExecuteNonQuery();
+        }
+
+        public List<(string CommentId, string UserId, string CommentText, string CreatedAt)> GetIcdComments(string icdId)
+        {
+            var list = new List<(string, string, string, string)>();
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = "SELECT CommentId, UserId, CommentText, CreatedAt FROM IcdComments WHERE IcdId = $id ORDER BY CreatedAt DESC";
+            cmd.Parameters.AddWithValue("$id", icdId);
+            using var r = cmd.ExecuteReader();
+            while (r.Read())
+            {
+                list.Add((r.GetString(0), r.GetString(1), r.GetString(2), r.IsDBNull(3) ? "" : r.GetString(3)));
+            }
+            return list;
+        }
+
+        // Change History
+        public void LogChange(string icdId, string userId, string changeType, string changeDescription)
+        {
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = "INSERT INTO IcdChangeHistory (ChangeId, IcdId, UserId, ChangeType, ChangeDescription, CreatedAt) VALUES ($cid, $id, $u, $t, $d, $at)";
+            cmd.Parameters.AddWithValue("$cid", Guid.NewGuid().ToString());
+            cmd.Parameters.AddWithValue("$id", icdId);
+            cmd.Parameters.AddWithValue("$u", userId);
+            cmd.Parameters.AddWithValue("$t", changeType);
+            cmd.Parameters.AddWithValue("$d", changeDescription);
+            cmd.Parameters.AddWithValue("$at", DateTime.UtcNow.ToString("O"));
+            cmd.ExecuteNonQuery();
+        }
+
+        public List<(string ChangeId, string UserId, string ChangeType, string ChangeDescription, string CreatedAt)> GetIcdChangeHistory(string icdId)
+        {
+            var list = new List<(string, string, string, string, string)>();
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = "SELECT ChangeId, UserId, ChangeType, ChangeDescription, CreatedAt FROM IcdChangeHistory WHERE IcdId = $id ORDER BY CreatedAt DESC";
+            cmd.Parameters.AddWithValue("$id", icdId);
+            using var r = cmd.ExecuteReader();
+            while (r.Read())
+            {
+                list.Add((r.GetString(0), r.GetString(1), r.GetString(2), r.GetString(3), r.IsDBNull(4) ? "" : r.GetString(4)));
+            }
+            return list;
+        }
+
+        // User Settings
+        public void SaveUserSettings(string userId, bool darkMode, string language, string theme)
+        {
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = "INSERT OR REPLACE INTO UserSettings (UserId, DarkMode, Language, Theme) VALUES ($u, $d, $l, $t)";
+            cmd.Parameters.AddWithValue("$u", userId);
+            cmd.Parameters.AddWithValue("$d", darkMode ? 1 : 0);
+            cmd.Parameters.AddWithValue("$l", language ?? "en");
+            cmd.Parameters.AddWithValue("$t", theme ?? "default");
+            cmd.ExecuteNonQuery();
+        }
+
+        public (bool DarkMode, string Language, string Theme) GetUserSettings(string userId)
+        {
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = "SELECT DarkMode, Language, Theme FROM UserSettings WHERE UserId = $u";
+            cmd.Parameters.AddWithValue("$u", userId);
+            using var r = cmd.ExecuteReader();
+            if (r.Read())
+            {
+                return (r.GetInt64(0) != 0, r.IsDBNull(1) ? "en" : r.GetString(1), r.IsDBNull(2) ? "default" : r.GetString(2));
+            }
+            return (false, "en", "default");
+        }
+
+        // Templates
+        public void SaveTemplate(string name, string description, string structureContentJson, string userId)
+        {
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = "INSERT INTO IcdTemplates (TemplateId, Name, Description, StructureContent, CreatedBy, CreatedAt) VALUES ($tid, $n, $d, $s, $u, $at)";
+            cmd.Parameters.AddWithValue("$tid", Guid.NewGuid().ToString());
+            cmd.Parameters.AddWithValue("$n", name);
+            cmd.Parameters.AddWithValue("$d", description ?? "");
+            cmd.Parameters.AddWithValue("$s", structureContentJson);
+            cmd.Parameters.AddWithValue("$u", userId);
+            cmd.Parameters.AddWithValue("$at", DateTime.UtcNow.ToString("O"));
+            cmd.ExecuteNonQuery();
+        }
+
+        public List<(string TemplateId, string Name, string Description, string CreatedBy)> GetTemplates()
+        {
+            var list = new List<(string, string, string, string)>();
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = "SELECT TemplateId, Name, Description, CreatedBy FROM IcdTemplates ORDER BY CreatedAt DESC";
+            using var r = cmd.ExecuteReader();
+            while (r.Read())
+            {
+                list.Add((r.GetString(0), r.GetString(1), r.IsDBNull(2) ? "" : r.GetString(2), r.IsDBNull(3) ? "" : r.GetString(3)));
+            }
+            return list;
+        }
+
+        public Icd? GetTemplate(string templateId)
+        {
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = "SELECT StructureContent FROM IcdTemplates WHERE TemplateId = $tid";
+            cmd.Parameters.AddWithValue("$tid", templateId);
+            using var r = cmd.ExecuteReader();
+            if (r.Read())
+            {
+                var content = r.GetString(0);
+                return JsonSerializer.Deserialize<Icd>(content);
+            }
+            return null;
         }
     }
 }

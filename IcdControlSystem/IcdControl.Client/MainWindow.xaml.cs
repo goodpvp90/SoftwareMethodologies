@@ -7,12 +7,30 @@ using IcdControl.Models;
 using Microsoft.Win32;
 using System.IO;
 using System.Text;
+using System.Linq;
+using System.Text.Json.Serialization;
 
 namespace IcdControl.Client
 {
+    public class StatsInfo
+    {
+        [JsonPropertyName("totalMessages")]
+        public int TotalMessages { get; set; }
+        
+        [JsonPropertyName("totalStructs")]
+        public int TotalStructs { get; set; }
+        
+        [JsonPropertyName("totalFields")]
+        public int TotalFields { get; set; }
+        
+        [JsonPropertyName("estimatedSizeBytes")]
+        public int EstimatedSizeBytes { get; set; }
+    }
+
     public partial class MainWindow : Window
     {
         private List<Icd> _icds = new List<Icd>();
+        private List<Icd> _filteredIcds = new List<Icd>();
 
         public MainWindow()
         {
@@ -35,12 +53,61 @@ namespace IcdControl.Client
             try
             {
                 _icds = await ApiClient.Client.GetFromJsonAsync<List<Icd>>("api/icd/list") ?? new List<Icd>();
-                IcdGrid.ItemsSource = _icds;
+                ApplyFilters();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Failed to load ICDs: {ex.Message}");
             }
+        }
+
+        private void ApplyFilters()
+        {
+            _filteredIcds = _icds.ToList();
+
+            // Search filter
+            if (!string.IsNullOrWhiteSpace(SearchTxt.Text))
+            {
+                var query = SearchTxt.Text.ToLowerInvariant();
+                _filteredIcds = _filteredIcds.Where(i =>
+                    (i.Name?.ToLowerInvariant().Contains(query) ?? false) ||
+                    (i.Description?.ToLowerInvariant().Contains(query) ?? false) ||
+                    (i.Messages?.Any(m => m.Name?.ToLowerInvariant().Contains(query) ?? false) ?? false) ||
+                    (i.Structs?.Any(s => s.Name?.ToLowerInvariant().Contains(query) ?? false) ?? false)
+                ).ToList();
+            }
+
+            // Version filters
+            if (double.TryParse(MinVersionTxt.Text, out double minVersion))
+                _filteredIcds = _filteredIcds.Where(i => i.Version >= minVersion).ToList();
+
+            if (double.TryParse(MaxVersionTxt.Text, out double maxVersion))
+                _filteredIcds = _filteredIcds.Where(i => i.Version <= maxVersion).ToList();
+
+            IcdGrid.ItemsSource = _filteredIcds;
+        }
+
+        private void SearchTxt_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            ApplyFilters();
+        }
+
+        private void Filter_Changed(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            ApplyFilters();
+        }
+
+        private void ClearFilter_Click(object sender, RoutedEventArgs e)
+        {
+            SearchTxt.Text = "";
+            MinVersionTxt.Text = "";
+            MaxVersionTxt.Text = "";
+            ApplyFilters();
+        }
+
+        private void IcdGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            OpenBtn_Click(sender, e);
         }
 
         private async void RefreshBtn_Click(object sender, RoutedEventArgs e) => await LoadIcds();
@@ -100,6 +167,76 @@ namespace IcdControl.Client
             }
         }
 
+        private async void ExportCsvBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (IcdGrid.SelectedItem is Icd selected)
+            {
+                try
+                {
+                    var icd = await ApiClient.Client.GetFromJsonAsync<Icd>($"api/icd/{selected.IcdId}");
+                    if (icd == null)
+                    {
+                        MessageBox.Show("Failed to load ICD.");
+                        return;
+                    }
+
+                    var csv = new StringBuilder();
+                    csv.AppendLine("Type,Name,Field,FieldType,SizeInBits");
+                    
+                    if (icd.Messages != null)
+                    {
+                        foreach (var msg in icd.Messages)
+                        {
+                            csv.AppendLine($"Message,{msg.Name},,,");
+                            if (msg.Fields != null)
+                            {
+                                foreach (var field in msg.Fields)
+                                {
+                                    if (field is DataField df)
+                                        csv.AppendLine($",,{df.Name},{df.Type},{df.SizeInBits}");
+                                    else if (field is Struct st)
+                                        csv.AppendLine($",,{st.Name},Struct,");
+                                }
+                            }
+                        }
+                    }
+
+                    if (icd.Structs != null)
+                    {
+                        foreach (var st in icd.Structs)
+                        {
+                            csv.AppendLine($"Struct,{st.Name},,,");
+                            if (st.Fields != null)
+                            {
+                                foreach (var field in st.Fields)
+                                {
+                                    if (field is DataField df)
+                                        csv.AppendLine($",,{df.Name},{df.Type},{df.SizeInBits}");
+                                    else if (field is Struct nested)
+                                        csv.AppendLine($",,{nested.Name},Struct,");
+                                }
+                            }
+                        }
+                    }
+
+                    var dlg = new SaveFileDialog { Filter = "CSV Files|*.csv", FileName = MakeSafeFileName(selected.Name) + ".csv" };
+                    if (dlg.ShowDialog() == true)
+                    {
+                        File.WriteAllText(dlg.FileName, csv.ToString(), Encoding.UTF8);
+                        MessageBox.Show("CSV export saved successfully.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Export failed: {ex.Message}");
+                }
+            }
+            else
+            {
+                MessageBox.Show("Please select an ICD first.");
+            }
+        }
+
         private void AdminPermissions_Click(object sender, RoutedEventArgs e)
         {
             var win = new AdminPermissionsWindow();
@@ -114,6 +251,35 @@ namespace IcdControl.Client
             win.ShowDialog();
         }
 
+        private async void TemplateBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var win = new TemplatesWindow();
+            win.Owner = this;
+            if (win.ShowDialog() == true && win.SelectedTemplateId != null)
+            {
+                try
+                {
+                    var template = await ApiClient.Client.GetFromJsonAsync<Icd>($"api/icd/template/{win.SelectedTemplateId}");
+                    if (template != null)
+                    {
+                        // Create new ICD from template
+                        template.IcdId = Guid.NewGuid().ToString();
+                        template.Name = template.Name + " (Copy)";
+                        var response = await ApiClient.Client.PostAsJsonAsync("api/icd/save", template);
+                        if (response.IsSuccessStatusCode)
+                        {
+                            MessageBox.Show("ICD created from template successfully!", "Template", MessageBoxButton.OK, MessageBoxImage.Information);
+                            await LoadIcds();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to create ICD from template: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
         private string MakeSafeFileName(string name)
         {
             var sb = new StringBuilder();
@@ -123,6 +289,37 @@ namespace IcdControl.Client
                 else sb.Append('_');
             }
             return sb.ToString();
+        }
+
+        private void SettingsBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var win = new SettingsWindow();
+            win.Owner = this;
+            win.ShowDialog();
+        }
+
+        private async void StatsBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (IcdGrid.SelectedItem is Icd selected)
+            {
+                try
+                {
+                    var stats = await ApiClient.Client.GetFromJsonAsync<StatsInfo>($"api/icd/{selected.IcdId}/stats");
+                    if (stats != null)
+                    {
+                        MessageBox.Show($"Statistics:\n\nTotal Messages: {stats.TotalMessages}\nTotal Structs: {stats.TotalStructs}\nTotal Fields: {stats.TotalFields}\nEstimated Size: {stats.EstimatedSizeBytes} bytes", 
+                            "ICD Statistics", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to load statistics: {ex.Message}");
+                }
+            }
+            else
+            {
+                MessageBox.Show("Please select an ICD first.");
+            }
         }
     }
 }
