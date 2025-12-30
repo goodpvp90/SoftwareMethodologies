@@ -35,3 +35,16 @@ C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdContr
 C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdControl.Models\obj\Debug\net8.0\refint\IcdControl.Models.dll
 C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdControl.Models\obj\Debug\net8.0\IcdControl.Models.pdb
 C:\Users\benzac\Desktop\Continue\SoftwareMethodologies\IcdControlSystem\IcdControl.Models\obj\Debug\net8.0\ref\IcdControl.Models.dll
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Models\bin\Debug\net8.0\IcdControl.Models.deps.json
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Models\bin\Debug\net8.0\IcdControl.Models.dll
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Models\bin\Debug\net8.0\IcdControl.Models.pdb
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Models\obj\Debug\net8.0\IcdControl.Models.csproj.AssemblyReference.cache
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Models\obj\Debug\net8.0\IcdControl.Models.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Models\obj\Debug\net8.0\IcdControl.Models.AssemblyInfoInputs.cache
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Models\obj\Debug\net8.0\IcdControl.Models.AssemblyInfo.cs
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Models\obj\Debug\net8.0\IcdControl.Models.csproj.CoreCompileInputs.cache
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Models\obj\Debug\net8.0\IcdControl.Models.sourcelink.json
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Models\obj\Debug\net8.0\IcdControl.Models.dll
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Models\obj\Debug\net8.0\refint\IcdControl.Models.dll
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Models\obj\Debug\net8.0\IcdControl.Models.pdb
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Models\obj\Debug\net8.0\ref\IcdControl.Models.dll

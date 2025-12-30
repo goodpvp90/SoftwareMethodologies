@@ -30,8 +30,7 @@ namespace IcdControl.Client
  return;
  }
 
- if (!_http.DefaultRequestHeaders.Contains("X-UserId"))
- _http.DefaultRequestHeaders.Add("X-UserId", ApiClient.CurrentUser.UserId);
+ ApiClient.EnsureAuthHeader();
 
  var res = await _http.PostAsJsonAsync("api/icd/save", icd);
  if (res.IsSuccessStatusCode)

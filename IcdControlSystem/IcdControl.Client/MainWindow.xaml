@@ -29,6 +29,7 @@
                 <StackPanel x:Name="AdminPanel" Visibility="Collapsed">
                     <TextBlock Text="ADMIN" FontSize="12" Foreground="{StaticResource TextSecondaryColor}" Margin="0,20,0,10"/>
                     <Button Content="Manage Permissions" Style="{StaticResource SecondaryBtn}" Click="AdminPermissions_Click" Margin="0,0,0,10"/>
+                    <Button Content="Manage Users" Style="{StaticResource SecondaryBtn}" Click="AdminUsers_Click" Margin="0,0,0,10"/>
                 </StackPanel>
             </StackPanel>
         </Border>

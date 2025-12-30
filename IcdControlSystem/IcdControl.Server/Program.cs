@@ -28,7 +28,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// The WPF client talks to the server over HTTP (see ApiClient.BaseAddress).
+// In Development, HTTPS redirection can break custom header-based auth on redirects.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 // Allow request body to be read multiple times (used for better error reporting on bad JSON)
 app.Use(async (ctx, next) =>

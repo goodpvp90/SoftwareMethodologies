@@ -11,20 +11,74 @@
 
         <StackPanel>
             <TextBlock Text="Manage ICD Permissions" FontSize="20" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}"/>
-            <ComboBox x:Name="IcdCombo" Margin="0,15,0,0" Height="35" DisplayMemberPath="Name" SelectionChanged="IcdCombo_SelectionChanged"/>
+
+            <TextBlock Text="Search User" Margin="0,15,0,5" Foreground="{StaticResource TextSecondaryColor}"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="3*"/>
+                </Grid.ColumnDefinitions>
+                <TextBox x:Name="UserSearchTxt" Height="35" TextChanged="UserSearchTxt_TextChanged"/>
+                <ComboBox x:Name="UserCombo" Grid.Column="1" Margin="10,0,0,0" Height="35"
+                          DisplayMemberPath="Username" SelectionChanged="UserCombo_SelectionChanged"/>
+            </Grid>
+
+            <TextBlock x:Name="SelectedUserTxt" Margin="0,10,0,0" Foreground="{StaticResource TextSecondaryColor}"/>
         </StackPanel>
 
         <DataGrid x:Name="PermGrid" Grid.Row="1" Margin="0,15,0,0" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="User" Binding="{Binding Username}" Width="*"/>
+                <DataGridTextColumn Header="ICD" Binding="{Binding IcdName}" Width="*"/>
                 <DataGridTextColumn Header="Status" Binding="{Binding StatusText}" Width="150"/>
                 <DataGridTemplateColumn Header="Actions" Width="220">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
-                                <Button Content="Edit" Click="GrantEdit_Click" Margin="0,0,5,0" Style="{StaticResource ModernBtn}" FontSize="11" Padding="8,4"/>
-                                <Button Content="View" Click="GrantView_Click" Margin="0,0,5,0" Style="{StaticResource SecondaryBtn}" FontSize="11" Padding="8,4"/>
-                                <Button Content="Revoke" Click="Revoke_Click" Foreground="Red" Style="{StaticResource SecondaryBtn}" FontSize="11" Padding="8,4"/>
+                                <Button Content="Edit" Click="GrantEdit_Click" Margin="0,0,5,0" FontSize="11" Padding="8,4">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SecondaryBtn}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsEditor}" Value="True">
+                                                    <Setter Property="Background" Value="{StaticResource PrimaryColor}"/>
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <Button Content="View" Click="GrantView_Click" Margin="0,0,5,0" FontSize="11" Padding="8,4">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SecondaryBtn}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsViewer}" Value="True">
+                                                    <Setter Property="Background" Value="{StaticResource PrimaryColor}"/>
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+
+                                <Button Content="Revoke" Click="Revoke_Click" Margin="0,0,0,0" FontSize="11" Padding="8,4">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource SecondaryBtn}">
+                                            <Setter Property="Foreground" Value="Red"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsNoAccess}" Value="True">
+                                                    <Setter Property="Background" Value="{StaticResource PrimaryColor}"/>
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                    <Setter Property="BorderThickness" Value="0"/>
+                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
                             </StackPanel>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>

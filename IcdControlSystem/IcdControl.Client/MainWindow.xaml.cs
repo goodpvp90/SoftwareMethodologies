@@ -107,6 +107,13 @@ namespace IcdControl.Client
             win.ShowDialog();
         }
 
+        private void AdminUsers_Click(object sender, RoutedEventArgs e)
+        {
+            var win = new AdminUsersWindow();
+            win.Owner = this;
+            win.ShowDialog();
+        }
+
         private string MakeSafeFileName(string name)
         {
             var sb = new StringBuilder();

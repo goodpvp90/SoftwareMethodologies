@@ -350,12 +350,79 @@ namespace IcdControl.Server.Controllers
 
         public class GrantRequest { public string UserId { get; set; } public string IcdId { get; set; } public bool CanEdit { get; set; } public bool Revoke { get; set; } }
 
+        [HttpGet("admin/user/{userId}")]
+        public IActionResult GetUser(string userId)
+        {
+            if (!CheckAdmin(out _)) return StatusCode(StatusCodes.Status403Forbidden, "Admin permission required.");
+            var user = _db.GetUserById(userId);
+            return user == null ? NotFound() : Ok(user);
+        }
+
+        [HttpGet("admin/user/{userId}/permissions")]
+        public IActionResult GetUserPermissions(string userId)
+        {
+            if (!CheckAdmin(out _)) return StatusCode(StatusCodes.Status403Forbidden, "Admin permission required.");
+
+            var perms = _db.GetUserPermissions(userId)
+                .Select(p => new UserIcdPermissionDto { IcdId = p.IcdId, CanEdit = p.CanEdit })
+                .ToList();
+
+            return Ok(perms);
+        }
+
+        public class UserIcdPermissionDto
+        {
+            public string IcdId { get; set; }
+            public bool CanEdit { get; set; }
+        }
+
+        [HttpPost("admin/user/{userId}/email")]
+        public IActionResult UpdateUserEmail(string userId, [FromBody] UpdateEmailRequest req)
+        {
+            if (!CheckAdmin(out _)) return StatusCode(StatusCodes.Status403Forbidden, "Admin permission required.");
+            if (req == null || string.IsNullOrWhiteSpace(req.Email)) return BadRequest("Email is required");
+
+            var ok = _db.UpdateUserEmail(userId, req.Email.Trim());
+            return ok ? Ok() : Conflict("Email already in use or invalid user");
+        }
+
+        public class UpdateEmailRequest
+        {
+            public string Email { get; set; }
+        }
+
+        [HttpPost("admin/user/{userId}/password")]
+        public IActionResult UpdateUserPassword(string userId, [FromBody] UpdatePasswordRequest req)
+        {
+            if (!CheckAdmin(out _)) return StatusCode(StatusCodes.Status403Forbidden, "Admin permission required.");
+            if (req == null || string.IsNullOrWhiteSpace(req.Password)) return BadRequest("Password is required");
+
+            var ok = _db.UpdateUserPassword(userId, req.Password);
+            return ok ? Ok() : NotFound();
+        }
+
+        public class UpdatePasswordRequest
+        {
+            public string Password { get; set; }
+        }
+
         private bool CheckAdmin(out string userId)
         {
             userId = null;
             if (!Request.Headers.TryGetValue("X-UserId", out var uid) || string.IsNullOrEmpty(uid)) return false;
-            userId = uid.ToString();
-            return _db.IsUserAdmin(userId);
+            // If the header is accidentally repeated, ASP.NET will join values as "id1,id2".
+            // Accept the first token to avoid false 403s.
+            var raw = uid.ToString();
+            userId = raw.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim())
+                .FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(userId)) return false;
+            var isAdmin = _db.IsUserAdmin(userId);
+            if (!isAdmin)
+            {
+                _logger.LogWarning("Admin check failed. Raw X-UserId='{Raw}', Parsed='{Parsed}'", raw, userId);
+            }
+            return isAdmin;
         }
 
         private async Task<string> ReadRawBodyAsync()

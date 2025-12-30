@@ -3,15 +3,17 @@ using System.Text.Json;
 using System.Security.Cryptography;
 using System.Text;
 using IcdControl.Models;
+using System.IO;
 
 namespace IcdControl.Server.Data
 {
     public class DatabaseService
     {
-        private string _conn = "Data Source=icd_system.db;Mode=ReadWriteCreate;Cache=Shared";
+        private readonly string _conn;
 
         public DatabaseService()
         {
+            _conn = BuildConnectionString();
             using var c = new SqliteConnection(_conn);
             c.Open();
 
@@ -29,6 +31,34 @@ namespace IcdControl.Server.Data
             cmd3.ExecuteNonQuery();
 
             EnsureAdminUser(c);
+        }
+
+        private string BuildConnectionString()
+        {
+            var appDataDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "IcdControlSystem");
+
+            Directory.CreateDirectory(appDataDir);
+
+            var appDataDbPath = Path.Combine(appDataDir, "icd_system.db");
+
+            // Best-effort migration: if an old DB exists in the process working directory, copy it once.
+            // This prevents the common "different DB per run" issue when working directory changes.
+            try
+            {
+                var legacyDbPath = Path.GetFullPath("icd_system.db");
+                if (File.Exists(legacyDbPath) && !File.Exists(appDataDbPath))
+                {
+                    File.Copy(legacyDbPath, appDataDbPath);
+                }
+            }
+            catch
+            {
+                // Ignore migration errors; we can always create a fresh DB.
+            }
+
+            return $"Data Source={appDataDbPath};Mode=ReadWriteCreate;Cache=Shared";
         }
 
         private void EnsureAdminUser(SqliteConnection c)
@@ -90,8 +120,9 @@ namespace IcdControl.Server.Data
             using var c = new SqliteConnection(_conn);
             c.Open();
             using var check = c.CreateCommand();
-            check.CommandText = "SELECT COUNT(1) FROM Users WHERE Username = $u";
+            check.CommandText = "SELECT COUNT(1) FROM Users WHERE Username = $u OR Email = $e";
             check.Parameters.AddWithValue("$u", req.Username);
+            check.Parameters.AddWithValue("$e", req.Email);
             if ((long)check.ExecuteScalar()! > 0) return false;
 
             var hashed = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(req.Password)));
@@ -252,6 +283,74 @@ namespace IcdControl.Server.Data
                     Email = r.IsDBNull(2) ? "" : r.GetString(2),
                     IsAdmin = !r.IsDBNull(3) && r.GetInt64(3) != 0
                 });
+            }
+            return list;
+        }
+
+        public User? GetUserById(string userId)
+        {
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = "SELECT UserId, Username, Email, IsAdmin FROM Users WHERE UserId = $u";
+            cmd.Parameters.AddWithValue("$u", userId);
+            using var r = cmd.ExecuteReader();
+            if (!r.Read()) return null;
+            return new User
+            {
+                UserId = r.GetString(0),
+                Username = r.IsDBNull(1) ? "Unknown" : r.GetString(1),
+                Email = r.IsDBNull(2) ? "" : r.GetString(2),
+                IsAdmin = !r.IsDBNull(3) && r.GetInt64(3) != 0
+            };
+        }
+
+        public bool UpdateUserEmail(string userId, string email)
+        {
+            if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(email)) return false;
+
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+
+            using var check = c.CreateCommand();
+            check.CommandText = "SELECT COUNT(1) FROM Users WHERE Email = $e AND UserId <> $u";
+            check.Parameters.AddWithValue("$e", email);
+            check.Parameters.AddWithValue("$u", userId);
+            if ((long)check.ExecuteScalar()! > 0) return false;
+
+            using var upd = c.CreateCommand();
+            upd.CommandText = "UPDATE Users SET Email = $e WHERE UserId = $u";
+            upd.Parameters.AddWithValue("$e", email);
+            upd.Parameters.AddWithValue("$u", userId);
+            return upd.ExecuteNonQuery() > 0;
+        }
+
+        public bool UpdateUserPassword(string userId, string newPassword)
+        {
+            if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(newPassword)) return false;
+            var hashed = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(newPassword)));
+
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+            using var upd = c.CreateCommand();
+            upd.CommandText = "UPDATE Users SET PasswordHash = $p WHERE UserId = $u";
+            upd.Parameters.AddWithValue("$p", hashed);
+            upd.Parameters.AddWithValue("$u", userId);
+            return upd.ExecuteNonQuery() > 0;
+        }
+
+        public List<(string IcdId, bool CanEdit)> GetUserPermissions(string userId)
+        {
+            var list = new List<(string, bool)>();
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+            using var cmd = c.CreateCommand();
+            cmd.CommandText = "SELECT IcdId, CanEdit FROM UserIcdPermissions WHERE UserId = $u";
+            cmd.Parameters.AddWithValue("$u", userId);
+            using var r = cmd.ExecuteReader();
+            while (r.Read())
+            {
+                list.Add((r.GetString(0), r.GetInt64(1) != 0));
             }
             return list;
         }
