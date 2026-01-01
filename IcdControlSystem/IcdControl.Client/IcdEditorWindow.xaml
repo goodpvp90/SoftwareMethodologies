@@ -4,11 +4,15 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:models="clr-namespace:IcdControl.Models;assembly=IcdControl.Models"
+        xmlns:local="clr-namespace:IcdControl.Client"
         mc:Ignorable="d"
-        Title="ICD Editor Studio" Height="850" Width="1200"
+        Title="ICD Editor Studio" Height="900" Width="1250"
         WindowStartupLocation="CenterOwner" Background="{DynamicResource BackgroundColor}">
 
     <Window.Resources>
+        <local:TypeToIconConverter x:Key="TypeToIconConverter"/>
+        <local:TypeToColorConverter x:Key="TypeToColorConverter"/>
+
         <ControlTemplate x:Key="DarkComboBoxTemplate" TargetType="ComboBox">
             <Grid>
                 <ToggleButton Name="ToggleButton" 
@@ -41,11 +45,6 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceColor}"/>
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryColor}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
-            <Setter Property="OverridesDefaultStyle" Value="True"/>
-            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
-            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
-            <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
         </Style>
 
         <Style TargetType="TextBox">
@@ -54,12 +53,12 @@
             <Setter Property="CaretBrush" Value="{DynamicResource TextPrimaryColor}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
             <Setter Property="Padding" Value="6"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
 
         <DataTemplate DataType="{x:Type models:DataField}">
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="🔹" Margin="0,0,5,0" Foreground="#60A5FA"/>
+                <TextBlock Text="{Binding Type, Converter={StaticResource TypeToIconConverter}}" 
+                           Foreground="{Binding Type, Converter={StaticResource TypeToColorConverter}}" Margin="0,0,5,0"/>
                 <TextBlock Text="{Binding Name}" Foreground="{DynamicResource TextPrimaryColor}"/>
                 <TextBlock Text=" : " Foreground="{DynamicResource TextSecondaryColor}"/>
                 <TextBlock Text="{Binding Type}" Foreground="{DynamicResource TextSecondaryColor}"/>
@@ -68,88 +67,94 @@
 
         <HierarchicalDataTemplate DataType="{x:Type models:Message}" ItemsSource="{Binding Fields}">
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="✉️" Margin="0,0,5,0"/>
+                <TextBlock Text="✉️ "/>
                 <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryColor}"/>
             </StackPanel>
         </HierarchicalDataTemplate>
 
         <HierarchicalDataTemplate DataType="{x:Type models:Struct}" ItemsSource="{Binding Fields}">
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="📦" Margin="0,0,5,0"/>
+                <TextBlock Text="📦 "/>
                 <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryColor}"/>
             </StackPanel>
         </HierarchicalDataTemplate>
 
-        <DataTemplate x:Key="FieldEditorTemplate">
+        <DataTemplate x:Key="PrimitiveFieldTemplate">
             <StackPanel Margin="10">
-                <Border BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1" Margin="0,0,0,15">
-                    <TextBlock Text="Edit Field" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryColor}" Margin="0,0,0,10"/>
+                <Border BorderBrush="#60A5FA" BorderThickness="0,0,0,2" Margin="0,0,0,15">
+                    <TextBlock Text="Edit Primitive Field" FontSize="18" FontWeight="Bold" Foreground="#60A5FA" Margin="0,0,0,10"/>
                 </Border>
 
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
+                <TextBlock Text="Variable Name" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15"/>
 
-                    <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                        <TextBlock Text="Name" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,0,4"/>
-                        <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
-                    </StackPanel>
+                <TextBlock Text="Primitive Type" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,0,4"/>
+                <ComboBox SelectedItem="{Binding Type, UpdateSourceTrigger=PropertyChanged}" 
+                          ItemsSource="{Binding DataContext.PrimitiveTypes, RelativeSource={RelativeSource AncestorType=Window}}"
+                          Style="{StaticResource DarkComboBox}" Margin="0,0,0,15"/>
 
-                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
-                        <TextBlock Text="Size (Bits)" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,0,4"/>
-                        <TextBox Text="{Binding SizeInBits, UpdateSourceTrigger=PropertyChanged}"/>
-                    </StackPanel>
-                </Grid>
+                <TextBlock Text="Size (Bits)" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding SizeInBits, UpdateSourceTrigger=PropertyChanged}"/>
 
-                <TextBlock Text="Data Type" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,15,0,4"/>
-                <ComboBox SelectedItem="{Binding Type}" 
-                          ItemsSource="{Binding DataContext.AvailableTypes, RelativeSource={RelativeSource AncestorType=Window}}"
-                          Style="{StaticResource DarkComboBox}"/>
+                <Button Content="🗑 Remove Field" Click="RemoveItem_Click" Style="{StaticResource SecondaryBtn}" Foreground="#EF4444" HorizontalAlignment="Left" Margin="0,30,0,0"/>
+            </StackPanel>
+        </DataTemplate>
 
-                <Button Content="🗑 Remove Field" Click="RemoveItem_Click" Background="Transparent" BorderBrush="#EF4444" BorderThickness="1" Foreground="#EF4444" HorizontalAlignment="Left" Padding="10,5" Margin="0,30,0,0"/>
+        <DataTemplate x:Key="LinkedStructTemplate">
+            <StackPanel Margin="10">
+                <Border BorderBrush="#F59E0B" BorderThickness="0,0,0,2" Margin="0,0,0,15">
+                    <TextBlock Text="🔗 Linked Struct Instance" FontSize="18" FontWeight="Bold" Foreground="#F59E0B" Margin="0,0,0,10"/>
+                </Border>
+
+                <TextBlock Text="Note: This is an instance of another Struct definition." Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,0,20"/>
+
+                <TextBlock Text="Instance Name" Foreground="#F59E0B" FontWeight="Bold" Margin="0,0,0,4"/>
+                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15"/>
+
+                <TextBlock Text="Struct Definition Type" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,0,4"/>
+                <ComboBox SelectedItem="{Binding Type, UpdateSourceTrigger=PropertyChanged}" 
+                          ItemsSource="{Binding DataContext.StructTypes, RelativeSource={RelativeSource AncestorType=Window}}"
+                          Style="{StaticResource DarkComboBox}" Margin="0,0,0,15"/>
+
+                <Button Content="🗑 Remove Link" Click="RemoveItem_Click" Style="{StaticResource SecondaryBtn}" Foreground="#EF4444" HorizontalAlignment="Left" Margin="0,20,0,0"/>
             </StackPanel>
         </DataTemplate>
 
         <DataTemplate x:Key="MessageEditorTemplate">
             <StackPanel Margin="10">
-                <Border BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1" Margin="0,0,0,15">
-                    <TextBlock Text="Edit Message" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryColor}" Margin="0,0,0,10"/>
-                </Border>
+                <TextBlock Text="Edit Message" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryColor}" Margin="0,0,0,15"/>
+                <TextBlock Text="Name" Foreground="{DynamicResource TextSecondaryColor}"/>
+                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
+                <TextBlock Text="ID (OpCode)" Foreground="{DynamicResource TextSecondaryColor}"/>
+                <TextBox Text="{Binding Id, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
+                <TextBlock Text="Description" Foreground="{DynamicResource TextSecondaryColor}"/>
+                <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" Height="60" TextWrapping="Wrap" Margin="0,0,0,20"/>
 
-                <TextBlock Text="Name" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,0,4"/>
-                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15"/>
-
-                <TextBlock Text="OpCode / ID" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,0,4"/>
-                <TextBox Text="{Binding Id, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15"/>
-
-                <TextBlock Text="Description" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,0,4"/>
-                <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" Height="80" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Margin="0,0,0,20"/>
-
+                <TextBlock Text="Add Variables:" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,0,5"/>
                 <StackPanel Orientation="Horizontal">
-                    <Button Content="+ Add Field" Click="AddField_Click" Style="{StaticResource ModernBtn}" Margin="0,0,10,0"/>
-                    <Button Content="🗑 Delete Message" Click="RemoveItem_Click" Background="Transparent" BorderBrush="#EF4444" BorderThickness="1" Foreground="#EF4444"/>
+                    <Button Content="+ Add Primitive" Click="AddPrimitive_Click" Style="{StaticResource ModernBtn}" Margin="0,0,10,0"/>
+                    <Button Content="+ Add Linked Struct" Click="AddLinkedStruct_Click" Style="{StaticResource ModernBtn}" Background="#F59E0B" BorderBrush="#F59E0B" Margin="0,0,10,0"/>
                 </StackPanel>
+
+                <Button Content="🗑 Delete Message" Click="RemoveItem_Click" Style="{StaticResource SecondaryBtn}" Foreground="#EF4444" HorizontalAlignment="Left" Margin="0,20,0,0"/>
             </StackPanel>
         </DataTemplate>
 
         <DataTemplate x:Key="StructEditorTemplate">
             <StackPanel Margin="10">
-                <Border BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1" Margin="0,0,0,15">
-                    <TextBlock Text="Edit Struct" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryColor}" Margin="0,0,0,10"/>
-                </Border>
+                <TextBlock Text="Edit Struct Definition" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryColor}" Margin="0,0,0,15"/>
+                <TextBlock Text="Struct Name" Foreground="{DynamicResource TextSecondaryColor}"/>
+                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
+                <TextBlock Text="Description" Foreground="{DynamicResource TextSecondaryColor}"/>
+                <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" Height="60" TextWrapping="Wrap" Margin="0,0,0,20"/>
 
-                <TextBlock Text="Struct Name" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,0,4"/>
-                <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15"/>
-
-                <TextBlock Text="Description" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,0,4"/>
-                <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" Height="80" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Margin="0,0,0,20"/>
-
+                <TextBlock Text="Add Variables:" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,0,5"/>
                 <StackPanel Orientation="Horizontal">
-                    <Button Content="+ Add Field" Click="AddField_Click" Style="{StaticResource ModernBtn}" Margin="0,0,10,0"/>
-                    <Button Content="🗑 Delete Struct" Click="RemoveItem_Click" Background="Transparent" BorderBrush="#EF4444" BorderThickness="1" Foreground="#EF4444"/>
+                    <Button Content="+ Add Primitive" Click="AddPrimitive_Click" Style="{StaticResource ModernBtn}" Margin="0,0,10,0"/>
+                    <Button Content="+ Add Linked Struct" Click="AddLinkedStruct_Click" Style="{StaticResource ModernBtn}" Background="#F59E0B" BorderBrush="#F59E0B" Margin="0,0,10,0"/>
                 </StackPanel>
+
+                <Button Content="🗑 Delete Struct" Click="RemoveItem_Click" Style="{StaticResource SecondaryBtn}" Foreground="#EF4444" HorizontalAlignment="Left" Margin="0,20,0,0"/>
             </StackPanel>
         </DataTemplate>
     </Window.Resources>
@@ -169,56 +174,45 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-
                 <TextBlock Text="ICD Editor" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryColor}" VerticalAlignment="Center" Margin="0,0,20,0"/>
-
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <Button Content="↩ Undo" Click="Undo_Click" Style="{StaticResource SecondaryBtn}" Margin="0,0,5,0"/>
                     <Button Content="↪ Redo" Click="Redo_Click" Style="{StaticResource SecondaryBtn}" Margin="0,0,15,0"/>
                     <Rectangle Width="1" Fill="{DynamicResource BorderColor}" Margin="0,4"/>
                     <Button Content="⬇ Export .h" Click="ExportHeader_Click" Style="{StaticResource SecondaryBtn}" Margin="15,0,0,0"/>
                 </StackPanel>
-
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="Last Modified by:" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,5,0"/>
+                    <TextBlock Text="Last Modified:" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,5,0"/>
                     <TextBlock x:Name="LastUserTxt" Text="Unknown" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryColor}" Margin="0,0,15,0"/>
-                    <TextBlock Text="Contributors:" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,5,0"/>
-                    <TextBlock x:Name="ContributorsCountTxt" Text="0" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryColor}"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <Border Grid.Row="1" Background="{DynamicResource BackgroundColor}" Padding="20,15">
+        <Border Grid.Row="1" Background="{DynamicResource BackgroundColor}" Padding="20,10">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="3*"/>
-                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-
-                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,0,10">
-                    <StackPanel Width="300" Margin="0,0,20,0">
-                        <TextBlock Text="ICD Name" Foreground="{DynamicResource TextSecondaryColor}" FontSize="11" Margin="0,0,0,2"/>
-                        <TextBox x:Name="NameTxt" FontSize="14" FontWeight="Medium"/>
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel Width="250" Margin="0,0,20,0">
+                        <TextBlock Text="ICD Name" Foreground="{DynamicResource TextSecondaryColor}" FontSize="11"/>
+                        <TextBox x:Name="NameTxt" FontSize="14"/>
                     </StackPanel>
                     <StackPanel Width="100">
-                        <TextBlock Text="Version" Foreground="{DynamicResource TextSecondaryColor}" FontSize="11" Margin="0,0,0,2"/>
+                        <TextBlock Text="Version" Foreground="{DynamicResource TextSecondaryColor}" FontSize="11"/>
                         <TextBox x:Name="VersionTxt" FontSize="14"/>
                     </StackPanel>
                 </StackPanel>
-
-                <Expander Grid.Row="1" Grid.Column="0" Header="Description &amp; Notes" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,5,0,0">
-                    <TextBox x:Name="DescTxt" Height="60" TextWrapping="Wrap" Margin="0,5,20,0"/>
+                <Expander Grid.Column="1" Header="Description" Foreground="{DynamicResource TextSecondaryColor}">
+                    <TextBox x:Name="DescTxt" Width="300" Height="60" TextWrapping="Wrap"/>
                 </Expander>
             </Grid>
         </Border>
 
-        <Grid Grid.Row="2" Margin="20,0,20,10">
+        <Grid Grid.Row="2" Margin="20,10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="300"/>
+                <ColumnDefinition Width="380"/>
                 <ColumnDefinition Width="20"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
@@ -230,28 +224,36 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" Background="{DynamicResource SurfaceColor}" CornerRadius="6" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1">
+                <Border Grid.Row="0" Background="{DynamicResource SurfaceColor}" CornerRadius="4" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1">
                     <DockPanel>
-                        <Border DockPanel.Dock="Top" Background="{DynamicResource SurfaceColor}" Padding="10" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1" CornerRadius="6,6,0,0">
-                            <TextBlock Text="MESSAGES" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryColor}"/>
-                        </Border>
+                        <TextBlock DockPanel.Dock="Top" Text="MESSAGES" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryColor}" Margin="10"/>
                         <Button DockPanel.Dock="Bottom" Content="+ Add Message" Click="AddMessage_Click" Style="{StaticResource SecondaryBtn}" Margin="5"/>
-                        <TreeView x:Name="MessagesTree" Background="Transparent" BorderThickness="0" SelectedItemChanged="MessagesTree_SelectedItemChanged" Padding="5"/>
+                        <TreeView x:Name="MessagesTree" Background="Transparent" BorderThickness="0" 
+                                  SelectedItemChanged="MessagesTree_SelectedItemChanged" Padding="5"
+                                  AllowDrop="True"
+                                  PreviewMouseLeftButtonDown="Tree_PreviewMouseLeftButtonDown"
+                                  PreviewMouseMove="Tree_PreviewMouseMove"
+                                  DragOver="Tree_DragOver"
+                                  Drop="Tree_Drop"/>
                     </DockPanel>
                 </Border>
 
-                <Border Grid.Row="2" Background="{DynamicResource SurfaceColor}" CornerRadius="6" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1">
+                <Border Grid.Row="2" Background="{DynamicResource SurfaceColor}" CornerRadius="4" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1">
                     <DockPanel>
-                        <Border DockPanel.Dock="Top" Background="{DynamicResource SurfaceColor}" Padding="10" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1" CornerRadius="6,6,0,0">
-                            <TextBlock Text="STRUCTS" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryColor}"/>
-                        </Border>
-                        <Button DockPanel.Dock="Bottom" Content="+ Add Struct" Click="AddStruct_Click" Style="{StaticResource SecondaryBtn}" Margin="5"/>
-                        <TreeView x:Name="StructsTree" Background="Transparent" BorderThickness="0" SelectedItemChanged="StructsTree_SelectedItemChanged" Padding="5"/>
+                        <TextBlock DockPanel.Dock="Top" Text="STRUCTS" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryColor}" Margin="10"/>
+                        <Button DockPanel.Dock="Bottom" Content="+ Add Struct Definition" Click="AddStruct_Click" Style="{StaticResource SecondaryBtn}" Margin="5"/>
+                        <TreeView x:Name="StructsTree" Background="Transparent" BorderThickness="0" 
+                                  SelectedItemChanged="StructsTree_SelectedItemChanged" Padding="5"
+                                  AllowDrop="True"
+                                  PreviewMouseLeftButtonDown="Tree_PreviewMouseLeftButtonDown"
+                                  PreviewMouseMove="Tree_PreviewMouseMove"
+                                  DragOver="Tree_DragOver"
+                                  Drop="Tree_Drop"/>
                     </DockPanel>
                 </Border>
             </Grid>
 
-            <Border Grid.Column="2" Background="{DynamicResource SurfaceColor}" CornerRadius="6" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1">
+            <Border Grid.Column="2" Background="{DynamicResource SurfaceColor}" CornerRadius="4" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <ContentControl x:Name="DetailsPresenter" Margin="20"/>
                 </ScrollViewer>

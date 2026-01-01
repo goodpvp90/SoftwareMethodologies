@@ -278,3 +278,4 @@ C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Client
 C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\SettingsWindow.g.cs
 C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\TemplatesWindow.g.cs
 C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\VersionsWindow.g.cs
+C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\GeneratedInternalTypeHelper.g.cs
