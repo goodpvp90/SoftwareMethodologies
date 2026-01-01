@@ -4,16 +4,16 @@
 winexe
 C#
 .cs
-C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\
+C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\
 IcdControl.Client
 none
 false
-TRACE;DEBUG;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
-C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\App.xaml
+TRACE;DEBUG;NET;NET8_0;NETCOREAPP
+C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\App.xaml
 12-963924352
 
 17-623965915
-344-2081557600
+344-712755550
 AdminPermissionsWindow.xaml;AdminUsersWindow.xaml;CommentsWindow.xaml;HistoryWindow.xaml;IcdEditorWindow.xaml;LoginWindow.xaml;MainWindow.xaml;NewIcdWindow.xaml;PreviewWindow.xaml;SettingsWindow.xaml;TemplatesWindow.xaml;VersionsWindow.xaml;
 
 False

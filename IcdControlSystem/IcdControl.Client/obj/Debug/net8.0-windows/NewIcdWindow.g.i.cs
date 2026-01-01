@@ -76,7 +76,7 @@ namespace IcdControl.Client {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/IcdControl.Client;V1.0.0.0;component/newicdwindow.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/IcdControl.Client;component/newicdwindow.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\NewIcdWindow.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

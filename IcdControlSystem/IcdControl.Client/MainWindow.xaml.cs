@@ -8,6 +8,7 @@ using Microsoft.Win32;
 using System.IO;
 using System.Text;
 using System.Linq;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Windows.Input;
 
@@ -17,30 +18,59 @@ namespace IcdControl.Client
     {
         [JsonPropertyName("totalMessages")]
         public int TotalMessages { get; set; }
-        
+
         [JsonPropertyName("totalStructs")]
         public int TotalStructs { get; set; }
-        
+
         [JsonPropertyName("totalFields")]
         public int TotalFields { get; set; }
-        
+
         [JsonPropertyName("estimatedSizeBytes")]
         public int EstimatedSizeBytes { get; set; }
+    }
+
+    // הגדרה יחידה של AppConfig - כל הקבצים בפרויקט יכירו אותה מכאן
+    public class AppConfig
+    {
+        public bool IsDarkMode { get; set; }
     }
 
     public partial class MainWindow : Window
     {
         private List<Icd> _icds = new List<Icd>();
         private List<Icd> _filteredIcds = new List<Icd>();
+        private const string ConfigFile = "config.json";
 
         public MainWindow()
         {
             InitializeComponent();
+            LoadLocalTheme(); // טעינת ערכת נושא בהפעלה
+        }
+
+        private void LoadLocalTheme()
+        {
+            try
+            {
+                if (File.Exists(ConfigFile))
+                {
+                    var json = File.ReadAllText(ConfigFile);
+                    var config = JsonSerializer.Deserialize<AppConfig>(json);
+                    if (config != null && config.IsDarkMode)
+                    {
+                        ThemeManager.ApplyDarkMode();
+                    }
+                    else
+                    {
+                        ThemeManager.ApplyLightMode();
+                    }
+                }
+            }
+            catch { /* התעלמות משגיאות בהפעלה ראשונית */ }
         }
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            // Admin Check
+            // בדיקת הרשאות אדמין
             if (ApiClient.CurrentUser != null && ApiClient.CurrentUser.IsAdmin)
             {
                 AdminPanel.Visibility = Visibility.Visible;
@@ -183,7 +213,7 @@ namespace IcdControl.Client
 
                     var csv = new StringBuilder();
                     csv.AppendLine("Type,Name,Field,FieldType,SizeInBits");
-                    
+
                     if (icd.Messages != null)
                     {
                         foreach (var msg in icd.Messages)
@@ -308,7 +338,7 @@ namespace IcdControl.Client
                     var stats = await ApiClient.Client.GetFromJsonAsync<StatsInfo>($"api/icd/{selected.IcdId}/stats");
                     if (stats != null)
                     {
-                        MessageBox.Show($"Statistics:\n\nTotal Messages: {stats.TotalMessages}\nTotal Structs: {stats.TotalStructs}\nTotal Fields: {stats.TotalFields}\nEstimated Size: {stats.EstimatedSizeBytes} bytes", 
+                        MessageBox.Show($"Statistics:\n\nTotal Messages: {stats.TotalMessages}\nTotal Structs: {stats.TotalStructs}\nTotal Fields: {stats.TotalFields}\nEstimated Size: {stats.EstimatedSizeBytes} bytes",
                             "ICD Statistics", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                 }

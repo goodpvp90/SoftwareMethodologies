@@ -63,26 +63,23 @@
                     </Grid.RowDefinitions>
 
                     <TextBlock Text="Search" Foreground="{DynamicResource TextSecondaryColor}" FontSize="12" Margin="0,0,0,5"/>
-                    <TextBox x:Name="SearchTxt" Grid.Row="1" TextChanged="SearchTxt_TextChanged" Margin="0,0,10,0">
-                        <TextBox.Style>
-                            <Style TargetType="TextBox">
-                                <Style.Triggers>
-                                    <Trigger Property="Text" Value="">
-                                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryColor}"/>
-                                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </TextBox.Style>
-                    </TextBox>
+
+                    <TextBox x:Name="SearchTxt" Grid.Row="1" TextChanged="SearchTxt_TextChanged" Margin="0,0,10,0"
+                             Foreground="{DynamicResource TextPrimaryColor}" 
+                             CaretBrush="{DynamicResource TextPrimaryColor}"/>
 
                     <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal" Margin="10,0,10,0">
                         <TextBlock Text="Min Version:" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{DynamicResource TextSecondaryColor}"/>
-                        <TextBox x:Name="MinVersionTxt" Width="60" TextChanged="Filter_Changed"/>
+                        <TextBox x:Name="MinVersionTxt" Width="60" TextChanged="Filter_Changed"
+                                 Foreground="{DynamicResource TextPrimaryColor}" 
+                                 CaretBrush="{DynamicResource TextPrimaryColor}"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" Grid.Row="1" Orientation="Horizontal" Margin="10,0,10,0">
                         <TextBlock Text="Max Version:" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{DynamicResource TextSecondaryColor}"/>
-                        <TextBox x:Name="MaxVersionTxt" Width="60" TextChanged="Filter_Changed"/>
+                        <TextBox x:Name="MaxVersionTxt" Width="60" TextChanged="Filter_Changed"
+                                 Foreground="{DynamicResource TextPrimaryColor}" 
+                                 CaretBrush="{DynamicResource TextPrimaryColor}"/>
                     </StackPanel>
 
                     <Button Grid.Column="3" Grid.Row="1" Content="Clear" Style="{StaticResource SecondaryBtn}" Click="ClearFilter_Click" Width="60"/>

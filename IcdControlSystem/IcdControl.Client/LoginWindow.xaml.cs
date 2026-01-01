@@ -3,15 +3,47 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Windows;
 using System.Windows.Input;
+using System.IO;            // הוספתי
+using System.Text.Json;     // הוספתי
 using IcdControl.Models;
 
 namespace IcdControl.Client
 {
     public partial class LoginWindow : Window
     {
+        private const string ConfigFile = "config.json";
+
         public LoginWindow()
         {
             InitializeComponent();
+            LoadLocalTheme(); // טעינת ערכת נושא מיד בפתיחת החלון
+        }
+
+        // --- Theme Logic ---
+        private void LoadLocalTheme()
+        {
+            try
+            {
+                if (File.Exists(ConfigFile))
+                {
+                    var json = File.ReadAllText(ConfigFile);
+                    // משתמשים ב-AppConfig שהוגדר ב-MainWindow (הוא באותו Namespace)
+                    var config = JsonSerializer.Deserialize<AppConfig>(json);
+
+                    if (config != null && config.IsDarkMode)
+                    {
+                        ThemeManager.ApplyDarkMode();
+                    }
+                    else
+                    {
+                        ThemeManager.ApplyLightMode();
+                    }
+                }
+            }
+            catch
+            {
+                // אם הקובץ לא קיים או שיש שגיאה, נשארים עם ברירת המחדל
+            }
         }
 
         // --- Window Logic ---

@@ -1,13 +1,19 @@
 using System;
 using System.Windows;
 using System.Net.Http.Json;
+using System.IO;
+using System.Text.Json;
 using IcdControl.Models;
 
 namespace IcdControl.Client
 {
+    // הערה: המחלקה AppConfig מוגדרת כבר ב-MainWindow.xaml.cs
+    // ואין צורך להגדיר אותה כאן שוב.
+
     public partial class SettingsWindow : Window
     {
         private bool _isInitializing;
+        private const string ConfigFile = "config.json";
 
         public SettingsWindow()
         {
@@ -20,18 +26,31 @@ namespace IcdControl.Client
             try
             {
                 _isInitializing = true;
-                var settings = await ApiClient.Client.GetFromJsonAsync<dynamic>("api/icd/settings");
-                if (settings != null)
-                {
-                    DarkModeChk.IsChecked = settings.DarkMode == true;
 
-                    if (DarkModeChk.IsChecked == true)
-                        ThemeManager.ApplyDarkMode();
-                    else
-                        ThemeManager.ApplyLightMode();
+                // 1. Try to load local config first
+                if (File.Exists(ConfigFile))
+                {
+                    var json = File.ReadAllText(ConfigFile);
+                    var config = JsonSerializer.Deserialize<AppConfig>(json);
+                    if (config != null)
+                    {
+                        DarkModeChk.IsChecked = config.IsDarkMode;
+                    }
                 }
+
+                // 2. Try to sync with Server (Optional)
+                try
+                {
+                    var settings = await ApiClient.Client.GetFromJsonAsync<dynamic>("api/icd/settings");
+                }
+                catch { }
+
+                // Apply visual state
+                if (DarkModeChk.IsChecked == true)
+                    ThemeManager.ApplyDarkMode();
+                else
+                    ThemeManager.ApplyLightMode();
             }
-            catch { }
             finally
             {
                 _isInitializing = false;
@@ -42,13 +61,21 @@ namespace IcdControl.Client
         {
             try
             {
+                bool isDarkMode = DarkModeChk.IsChecked == true;
+
+                // 1. Save Locally
+                var config = new AppConfig { IsDarkMode = isDarkMode };
+                var json = JsonSerializer.Serialize(config);
+                File.WriteAllText(ConfigFile, json);
+
+                // 2. Save to Server
                 await ApiClient.Client.PostAsJsonAsync("api/icd/settings", new
                 {
-                    DarkMode = DarkModeChk.IsChecked == true
+                    DarkMode = isDarkMode
                 });
 
-                // Apply dark mode immediately
-                if (DarkModeChk.IsChecked == true)
+                // 3. Apply Theme
+                if (isDarkMode)
                     ThemeManager.ApplyDarkMode();
                 else
                     ThemeManager.ApplyLightMode();
@@ -70,19 +97,14 @@ namespace IcdControl.Client
 
         private void DarkModeChk_Checked(object sender, RoutedEventArgs e)
         {
-            if (_isInitializing)
-                return;
-
+            if (_isInitializing) return;
             ThemeManager.ApplyDarkMode(userInitiated: true);
         }
 
         private void DarkModeChk_Unchecked(object sender, RoutedEventArgs e)
         {
-            if (_isInitializing)
-                return;
-
+            if (_isInitializing) return;
             ThemeManager.ApplyLightMode(userInitiated: true);
         }
     }
 }
-
