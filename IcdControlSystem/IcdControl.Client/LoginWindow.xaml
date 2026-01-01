@@ -5,83 +5,26 @@
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize" WindowStyle="None" AllowsTransparency="True" Background="Transparent">
 
-    <Window.Resources>
-        <SolidColorBrush x:Key="PrimaryColor" Color="#2563EB"/>
-        <SolidColorBrush x:Key="PrimaryHoverColor" Color="#1D4ED8"/>
-
-        <Style TargetType="Button" x:Key="ModernBtn">
-            <Setter Property="Background" Value="{StaticResource PrimaryColor}"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="Padding" Value="10"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="6">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{StaticResource PrimaryHoverColor}"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style TargetType="Border" x:Key="InputContainer">
-            <Setter Property="CornerRadius" Value="6"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#D1D5DB"/>
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="Margin" Value="0,0,0,15"/>
-        </Style>
-
-        <Style TargetType="TextBox">
-            <Setter Property="Padding" Value="10"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Background" Value="Transparent"/>
-        </Style>
-
-        <Style TargetType="PasswordBox">
-            <Setter Property="Padding" Value="10"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Background" Value="Transparent"/>
-        </Style>
-    </Window.Resources>
-
-    <Border CornerRadius="12" Background="#F3F4F6">
+    <Border CornerRadius="12" Background="{DynamicResource SurfaceColor}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1">
         <Border.Effect>
             <DropShadowEffect BlurRadius="20" ShadowDepth="5" Opacity="0.2" Color="Black"/>
         </Border.Effect>
 
         <Grid>
             <Button Content="✕" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="15"
-                    Background="Transparent" Foreground="Gray" BorderThickness="0" 
+                    Background="Transparent" Foreground="{DynamicResource TextSecondaryColor}" BorderThickness="0" 
                     FontSize="16" Cursor="Hand" Click="CloseApp_Click"/>
 
             <StackPanel x:Name="LoginPanel" VerticalAlignment="Center" HorizontalAlignment="Center" Width="300" Visibility="Visible">
 
-                <TextBlock Text="Welcome Back" FontSize="26" FontWeight="Bold" Foreground="#111827" HorizontalAlignment="Center" Margin="0,0,0,5"/>
-                <TextBlock Text="Sign in to ICD Control System" FontSize="14" Foreground="#6B7280" HorizontalAlignment="Center" Margin="0,0,0,30"/>
+                <TextBlock Text="Welcome Back" FontSize="26" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryColor}" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                <TextBlock Text="Sign in to ICD Control System" FontSize="14" Foreground="{DynamicResource TextSecondaryColor}" HorizontalAlignment="Center" Margin="0,0,0,30"/>
 
-                <TextBlock Text="Username" Foreground="#374151" FontWeight="Medium" Margin="0,0,0,5"/>
-                <Border Style="{StaticResource InputContainer}">
-                    <TextBox x:Name="LoginUsernameTxt"/>
-                </Border>
+                <TextBlock Text="Username" Foreground="{DynamicResource TextSecondaryColor}" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                <TextBox x:Name="LoginUsernameTxt" Margin="0,0,0,15"/>
 
-                <TextBlock Text="Password" Foreground="#374151" FontWeight="Medium" Margin="0,0,0,5"/>
-                <Border Style="{StaticResource InputContainer}">
-                    <PasswordBox x:Name="LoginPassBox" KeyDown="LoginPassBox_KeyDown"/>
-                </Border>
+                <TextBlock Text="Password" Foreground="{DynamicResource TextSecondaryColor}" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                <PasswordBox x:Name="LoginPassBox" KeyDown="LoginPassBox_KeyDown" Margin="0,0,0,15"/>
 
                 <TextBlock x:Name="LoginErrorTxt" Foreground="#DC2626" FontSize="13" FontWeight="Medium"
                            TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,0,0,10" 
@@ -90,7 +33,7 @@
                 <Button Content="Sign In" Click="Login_Click" Style="{StaticResource ModernBtn}" Height="45"/>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
-                    <TextBlock Text="Don't have an account?" Foreground="#6B7280"/>
+                    <TextBlock Text="Don't have an account?" Foreground="{DynamicResource TextSecondaryColor}"/>
                     <Button Content="Register" Click="SwitchToRegister_Click" 
                             Background="Transparent" Foreground="{StaticResource PrimaryColor}" 
                             BorderThickness="0" FontWeight="Bold" Cursor="Hand" Margin="5,0,0,0"/>
@@ -99,27 +42,19 @@
 
             <StackPanel x:Name="RegisterPanel" VerticalAlignment="Center" HorizontalAlignment="Center" Width="300" Visibility="Collapsed">
 
-                <TextBlock Text="Create Account" FontSize="26" FontWeight="Bold" Foreground="#111827" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                <TextBlock Text="Create Account" FontSize="26" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryColor}" HorizontalAlignment="Center" Margin="0,0,0,20"/>
 
-                <TextBlock Text="Username" Foreground="#374151" FontWeight="Medium" Margin="0,0,0,5"/>
-                <Border Style="{StaticResource InputContainer}" Margin="0,0,0,10">
-                    <TextBox x:Name="RegUsernameTxt"/>
-                </Border>
+                <TextBlock Text="Username" Foreground="{DynamicResource TextSecondaryColor}" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                <TextBox x:Name="RegUsernameTxt" Margin="0,0,0,10"/>
 
-                <TextBlock Text="Email" Foreground="#374151" FontWeight="Medium" Margin="0,0,0,5"/>
-                <Border Style="{StaticResource InputContainer}" Margin="0,0,0,10">
-                    <TextBox x:Name="RegEmailTxt"/>
-                </Border>
+                <TextBlock Text="Email" Foreground="{DynamicResource TextSecondaryColor}" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                <TextBox x:Name="RegEmailTxt" Margin="0,0,0,10"/>
 
-                <TextBlock Text="Password" Foreground="#374151" FontWeight="Medium" Margin="0,0,0,5"/>
-                <Border Style="{StaticResource InputContainer}" Margin="0,0,0,10">
-                    <PasswordBox x:Name="RegPassBox"/>
-                </Border>
+                <TextBlock Text="Password" Foreground="{DynamicResource TextSecondaryColor}" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                <PasswordBox x:Name="RegPassBox" Margin="0,0,0,10"/>
 
-                <TextBlock Text="Confirm Password" Foreground="#374151" FontWeight="Medium" Margin="0,0,0,5"/>
-                <Border Style="{StaticResource InputContainer}" Margin="0,0,0,10">
-                    <PasswordBox x:Name="RegConfirmPassBox"/>
-                </Border>
+                <TextBlock Text="Confirm Password" Foreground="{DynamicResource TextSecondaryColor}" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                <PasswordBox x:Name="RegConfirmPassBox" Margin="0,0,0,10"/>
 
                 <TextBlock x:Name="RegErrorTxt" Foreground="#DC2626" FontSize="13" FontWeight="Medium"
                            TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,0,0,10" 
@@ -128,7 +63,7 @@
                 <Button Content="Sign Up" Click="Register_Click" Style="{StaticResource ModernBtn}" Height="45"/>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
-                    <TextBlock Text="Already have an account?" Foreground="#6B7280"/>
+                    <TextBlock Text="Already have an account?" Foreground="{DynamicResource TextSecondaryColor}"/>
                     <Button Content="Log In" Click="SwitchToLogin_Click" 
                             Background="Transparent" Foreground="{StaticResource PrimaryColor}" 
                             BorderThickness="0" FontWeight="Bold" Cursor="Hand" Margin="5,0,0,0"/>

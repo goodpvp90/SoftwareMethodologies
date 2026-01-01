@@ -1,13 +1,14 @@
 using System;
-using System.Net.Http;
-using System.Net.Http.Json;
 using System.Windows;
+using System.Net.Http.Json;
 using IcdControl.Models;
 
 namespace IcdControl.Client
 {
     public partial class SettingsWindow : Window
     {
+        private bool _isInitializing;
+
         public SettingsWindow()
         {
             InitializeComponent();
@@ -18,46 +19,39 @@ namespace IcdControl.Client
         {
             try
             {
+                _isInitializing = true;
                 var settings = await ApiClient.Client.GetFromJsonAsync<dynamic>("api/icd/settings");
                 if (settings != null)
                 {
                     DarkModeChk.IsChecked = settings.DarkMode == true;
-                    if (settings.Language != null)
-                    {
-                        foreach (System.Windows.Controls.ComboBoxItem item in LanguageCombo.Items)
-                            if (item.Tag?.ToString() == settings.Language.ToString())
-                                LanguageCombo.SelectedItem = item;
-                    }
-                    if (settings.Theme != null)
-                    {
-                        foreach (System.Windows.Controls.ComboBoxItem item in ThemeCombo.Items)
-                            if (item.Tag?.ToString() == settings.Theme.ToString())
-                                ThemeCombo.SelectedItem = item;
-                    }
+
+                    if (DarkModeChk.IsChecked == true)
+                        ThemeManager.ApplyDarkMode();
+                    else
+                        ThemeManager.ApplyLightMode();
                 }
             }
             catch { }
+            finally
+            {
+                _isInitializing = false;
+            }
         }
 
         private async void SaveBtn_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                var language = (LanguageCombo.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString() ?? "en";
-                var theme = (ThemeCombo.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString() ?? "default";
-                
                 await ApiClient.Client.PostAsJsonAsync("api/icd/settings", new
                 {
-                    DarkMode = DarkModeChk.IsChecked == true,
-                    Language = language,
-                    Theme = theme
+                    DarkMode = DarkModeChk.IsChecked == true
                 });
 
                 // Apply dark mode immediately
                 if (DarkModeChk.IsChecked == true)
-                    ApplyDarkMode();
+                    ThemeManager.ApplyDarkMode();
                 else
-                    ApplyLightMode();
+                    ThemeManager.ApplyLightMode();
 
                 MessageBox.Show("Settings saved successfully.", "Settings", MessageBoxButton.OK, MessageBoxImage.Information);
                 DialogResult = true;
@@ -76,31 +70,18 @@ namespace IcdControl.Client
 
         private void DarkModeChk_Checked(object sender, RoutedEventArgs e)
         {
-            ApplyDarkMode();
+            if (_isInitializing)
+                return;
+
+            ThemeManager.ApplyDarkMode(userInitiated: true);
         }
 
         private void DarkModeChk_Unchecked(object sender, RoutedEventArgs e)
         {
-            ApplyLightMode();
-        }
+            if (_isInitializing)
+                return;
 
-        private void ApplyDarkMode()
-        {
-            // This is a simplified dark mode - in production you'd want a proper theme system
-            Application.Current.Resources["BackgroundColor"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(30, 30, 30));
-            Application.Current.Resources["SurfaceColor"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(40, 40, 40));
-            Application.Current.Resources["TextPrimaryColor"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(240, 240, 240));
-            Application.Current.Resources["TextSecondaryColor"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(180, 180, 180));
-            Application.Current.Resources["BorderColor"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(60, 60, 60));
-        }
-
-        private void ApplyLightMode()
-        {
-            Application.Current.Resources["BackgroundColor"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(243, 244, 246));
-            Application.Current.Resources["SurfaceColor"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(255, 255, 255));
-            Application.Current.Resources["TextPrimaryColor"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(31, 41, 55));
-            Application.Current.Resources["TextSecondaryColor"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(107, 114, 128));
-            Application.Current.Resources["BorderColor"] = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(229, 231, 235));
+            ThemeManager.ApplyLightMode(userInitiated: true);
         }
     }
 }

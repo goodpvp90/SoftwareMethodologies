@@ -125,12 +125,14 @@ namespace IcdControl.Server.Data
 
         public User? Authenticate(string username, string pass)
         {
+            username = username?.Trim() ?? "";
+            pass = pass?.Trim() ?? "";
             var hashed = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(pass)));
             using var c = new SqliteConnection(_conn);
             c.Open();
             using var cmd = c.CreateCommand();
             // Case-insensitive username check generally handled by DB, but standardizing usually safer
-            cmd.CommandText = "SELECT UserId, Username, Email, IsAdmin FROM Users WHERE Username = $u AND PasswordHash = $p";
+            cmd.CommandText = "SELECT UserId, Username, Email, IsAdmin FROM Users WHERE Username = $u COLLATE NOCASE AND PasswordHash = $p";
             cmd.Parameters.AddWithValue("$u", username);
             cmd.Parameters.AddWithValue("$p", hashed);
             using var r = cmd.ExecuteReader();

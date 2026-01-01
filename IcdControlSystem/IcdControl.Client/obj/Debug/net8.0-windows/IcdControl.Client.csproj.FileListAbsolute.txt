@@ -266,3 +266,15 @@ C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdContro
 C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\SettingsWindow.g.cs
 C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\TemplatesWindow.g.cs
 C:\Users\YAMEL\Documents\GitHub\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\VersionsWindow.g.cs
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\CommentsWindow.baml
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\HistoryWindow.baml
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\PreviewWindow.baml
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\SettingsWindow.baml
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\TemplatesWindow.baml
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\VersionsWindow.baml
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\CommentsWindow.g.cs
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\HistoryWindow.g.cs
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\PreviewWindow.g.cs
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\SettingsWindow.g.cs
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\TemplatesWindow.g.cs
+C:\Users\benzac\Desktop\SoftwareMethodologies\IcdControlSystem\IcdControl.Client\obj\Debug\net8.0-windows\VersionsWindow.g.cs

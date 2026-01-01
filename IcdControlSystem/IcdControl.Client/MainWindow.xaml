@@ -6,30 +6,30 @@
         xmlns:local="clr-namespace:IcdControl.Client"
         mc:Ignorable="d"
         Title="ICD Control System" Height="600" Width="1000" 
-        WindowStartupLocation="CenterScreen" Background="{StaticResource BackgroundColor}"
-        Loaded="Window_Loaded">
+        WindowStartupLocation="CenterScreen" Background="{DynamicResource BackgroundColor}"
+        Loaded="Window_Loaded" PreviewKeyDown="Window_PreviewKeyDown">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="220"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" Background="White" BorderBrush="{StaticResource BorderColor}" BorderThickness="0,0,1,0">
+        <Border Grid.Column="0" Background="{DynamicResource SurfaceColor}" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,1,0">
             <StackPanel Margin="20">
                 <TextBlock Text="ICD Control" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryColor}" Margin="0,0,0,30"/>
 
-                <TextBlock Text="MENU" FontSize="12" Foreground="{StaticResource TextSecondaryColor}" Margin="0,0,0,10"/>
+                <TextBlock Text="MENU" FontSize="12" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,0,10"/>
                 <Button x:Name="NewBtn" Content="+ New ICD" Style="{StaticResource ModernBtn}" Click="NewBtn_Click" Margin="0,0,0,10"/>
                 <Button x:Name="TemplateBtn" Content="📋 From Template" Style="{StaticResource SecondaryBtn}" Click="TemplateBtn_Click" Margin="0,0,0,10"/>
                 <Button x:Name="RefreshBtn" Content="Refresh List" Style="{StaticResource SecondaryBtn}" Click="RefreshBtn_Click" Margin="0,0,0,10"/>
 
-                <TextBlock Text="ACTIONS" FontSize="12" Foreground="{StaticResource TextSecondaryColor}" Margin="0,20,0,10"/>
+                <TextBlock Text="ACTIONS" FontSize="12" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,20,0,10"/>
                 <Button x:Name="OpenBtn" Content="Open Editor" Style="{StaticResource SecondaryBtn}" Click="OpenBtn_Click" Margin="0,0,0,10"/>
                 <Button x:Name="ExportBtn" Content="Export Header" Style="{StaticResource SecondaryBtn}" Click="ExportBtn_Click" Margin="0,0,0,10"/>
                 <Button x:Name="ExportCsvBtn" Content="Export CSV" Style="{StaticResource SecondaryBtn}" Click="ExportCsvBtn_Click" Margin="0,0,0,10"/>
 
                 <StackPanel x:Name="AdminPanel" Visibility="Collapsed">
-                    <TextBlock Text="ADMIN" FontSize="12" Foreground="{StaticResource TextSecondaryColor}" Margin="0,20,0,10"/>
+                    <TextBlock Text="ADMIN" FontSize="12" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,20,0,10"/>
                     <Button Content="Manage Permissions" Style="{StaticResource SecondaryBtn}" Click="AdminPermissions_Click" Margin="0,0,0,10"/>
                     <Button Content="Manage Users" Style="{StaticResource SecondaryBtn}" Click="AdminUsers_Click" Margin="0,0,0,10"/>
                 </StackPanel>
@@ -44,12 +44,12 @@
             </Grid.RowDefinitions>
 
             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,20">
-                <TextBlock Text="Dashboard" FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryColor}" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                <TextBlock Text="Dashboard" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryColor}" VerticalAlignment="Center" Margin="0,0,20,0"/>
                 <Button x:Name="SettingsBtn" Content="⚙ Settings" Style="{StaticResource SecondaryBtn}" Click="SettingsBtn_Click" Margin="0,0,10,0"/>
                 <Button x:Name="StatsBtn" Content="📊 Stats" Style="{StaticResource SecondaryBtn}" Click="StatsBtn_Click"/>
             </StackPanel>
 
-            <Border Grid.Row="1" Background="White" CornerRadius="8" BorderBrush="{StaticResource BorderColor}" BorderThickness="1" Padding="15" Margin="0,0,0,15">
+            <Border Grid.Row="1" Background="{DynamicResource SurfaceColor}" CornerRadius="8" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" Padding="15" Margin="0,0,0,15">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -62,26 +62,26 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Text="Search" Foreground="{StaticResource TextSecondaryColor}" FontSize="12" Margin="0,0,0,5"/>
+                    <TextBlock Text="Search" Foreground="{DynamicResource TextSecondaryColor}" FontSize="12" Margin="0,0,0,5"/>
                     <TextBox x:Name="SearchTxt" Grid.Row="1" TextChanged="SearchTxt_TextChanged" Margin="0,0,10,0">
                         <TextBox.Style>
                             <Style TargetType="TextBox">
                                 <Style.Triggers>
                                     <Trigger Property="Text" Value="">
-                                        <Setter Property="Foreground" Value="Gray"/>
-                                    </Trigger>
+                                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryColor}"/>
+                                                    </Trigger>
                                 </Style.Triggers>
                             </Style>
                         </TextBox.Style>
                     </TextBox>
 
                     <StackPanel Grid.Column="1" Grid.Row="1" Orientation="Horizontal" Margin="10,0,10,0">
-                        <TextBlock Text="Min Version:" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{StaticResource TextSecondaryColor}"/>
+                        <TextBlock Text="Min Version:" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{DynamicResource TextSecondaryColor}"/>
                         <TextBox x:Name="MinVersionTxt" Width="60" TextChanged="Filter_Changed"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" Grid.Row="1" Orientation="Horizontal" Margin="10,0,10,0">
-                        <TextBlock Text="Max Version:" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{StaticResource TextSecondaryColor}"/>
+                        <TextBlock Text="Max Version:" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="{DynamicResource TextSecondaryColor}"/>
                         <TextBox x:Name="MaxVersionTxt" Width="60" TextChanged="Filter_Changed"/>
                     </StackPanel>
 
@@ -89,7 +89,7 @@
                 </Grid>
             </Border>
 
-            <Border Grid.Row="2" Background="White" CornerRadius="8" BorderBrush="{StaticResource BorderColor}" BorderThickness="1">
+            <Border Grid.Row="2" Background="{DynamicResource SurfaceColor}" CornerRadius="8" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1">
                 <DataGrid x:Name="IcdGrid" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" MouseDoubleClick="IcdGrid_MouseDoubleClick">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="ICD Name" Binding="{Binding Name}" Width="1.5*" />

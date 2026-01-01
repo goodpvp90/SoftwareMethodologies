@@ -77,8 +77,8 @@ namespace IcdControl.Client
         {
             ClearErrors(); // Reset error state
 
-            var username = LoginUsernameTxt.Text;
-            var pass = LoginPassBox.Password;
+            var username = LoginUsernameTxt.Text?.Trim();
+            var pass = LoginPassBox.Password?.Trim();
 
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(pass))
             {

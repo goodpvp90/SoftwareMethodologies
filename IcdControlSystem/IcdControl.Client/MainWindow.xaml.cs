@@ -9,6 +9,7 @@ using System.IO;
 using System.Text;
 using System.Linq;
 using System.Text.Json.Serialization;
+using System.Windows.Input;
 
 namespace IcdControl.Client
 {
@@ -319,6 +320,29 @@ namespace IcdControl.Client
             else
             {
                 MessageBox.Show("Please select an ICD first.");
+            }
+        }
+
+        private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (Keyboard.Modifiers != ModifierKeys.Control)
+                return;
+
+            switch (e.Key)
+            {
+                case Key.N:
+                    NewBtn_Click(sender, e);
+                    e.Handled = true;
+                    break;
+                case Key.O:
+                    OpenBtn_Click(sender, e);
+                    e.Handled = true;
+                    break;
+                case Key.F:
+                    SearchTxt.Focus();
+                    SearchTxt.SelectAll();
+                    e.Handled = true;
+                    break;
             }
         }
     }
