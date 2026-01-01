@@ -12,7 +12,7 @@ using System.IO;
 using System.Text;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Collections; // חובה עבור IList
+using System.Collections;
 using IcdControl.Models;
 
 namespace IcdControl.Client
@@ -29,7 +29,6 @@ namespace IcdControl.Client
         {
             if (value is string typeStr)
             {
-                // אם זה ברשימת הפרימיטיבים -> אייקון כחול, אחרת -> לינק
                 if (Primitives.Contains(typeStr)) return "🔹";
                 return "🔗";
             }
@@ -47,8 +46,8 @@ namespace IcdControl.Client
         {
             if (value is string typeStr)
             {
-                if (Primitives.Contains(typeStr)) return new SolidColorBrush(Color.FromRgb(96, 165, 250)); // כחול
-                return new SolidColorBrush(Color.FromRgb(245, 158, 11)); // כתום
+                if (Primitives.Contains(typeStr)) return new SolidColorBrush(Color.FromRgb(96, 165, 250));
+                return new SolidColorBrush(Color.FromRgb(245, 158, 11));
             }
             return Brushes.Gray;
         }
@@ -63,15 +62,14 @@ namespace IcdControl.Client
         private string _icdId;
         private Icd _currentIcd;
 
-        // Drag & Drop State
         private Point _startPoint;
         private object _draggedItem;
 
-        // View Models
+        private bool _versionChangedManually = false;
+
         public ObservableCollection<Message> MessageList { get; set; } = new ObservableCollection<Message>();
         public ObservableCollection<IcdControl.Models.Struct> StructList { get; set; } = new ObservableCollection<IcdControl.Models.Struct>();
 
-        // Type Lists
         public List<string> PrimitiveTypes { get; set; } = new List<string>
         {
             "uint8", "int8", "uint16", "int16", "uint32", "int32",
@@ -103,44 +101,47 @@ namespace IcdControl.Client
                 if (_currentIcd != null)
                 {
                     NameTxt.Text = _currentIcd.Name;
-                    VersionTxt.Text = _currentIcd.Version.ToString();
+
+                    string verStr = _currentIcd.Version.ToString();
+                    if (!verStr.Contains(".")) verStr += ".0";
+                    VersionTxt.Text = verStr;
+
                     DescTxt.Text = _currentIcd.Description;
                     if (ApiClient.CurrentUser != null) LastUserTxt.Text = ApiClient.CurrentUser.Username;
 
                     RebuildTrees();
                     RefreshTypes();
+
+                    _versionChangedManually = false;
                 }
             }
             catch (Exception ex) { MessageBox.Show($"Error loading ICD: {ex.Message}"); }
         }
 
-        // --- התיקון הקריטי: עדכון חכם במקום מחיקה מלאה ---
+        private void VersionTxt_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            if (IsLoaded)
+            {
+                _versionChangedManually = true;
+            }
+        }
+
         private void RefreshTypes()
         {
-            // אוספים את שמות המבנים הקיימים כרגע
             var currentStructNames = _currentIcd?.Structs?
                 .Select(s => s.Name)
                 .Where(n => !string.IsNullOrWhiteSpace(n))
                 .ToList() ?? new List<string>();
 
-            // 1. הסרת שמות שכבר לא קיימים (למשל אם מחקנו מבנה)
             for (int i = StructTypes.Count - 1; i >= 0; i--)
             {
-                if (!currentStructNames.Contains(StructTypes[i]))
-                {
-                    StructTypes.RemoveAt(i);
-                }
+                if (!currentStructNames.Contains(StructTypes[i])) StructTypes.RemoveAt(i);
             }
 
-            // 2. הוספת שמות חדשים שעדיין לא ברשימה
             foreach (var name in currentStructNames)
             {
-                if (!StructTypes.Contains(name))
-                {
-                    StructTypes.Add(name);
-                }
+                if (!StructTypes.Contains(name)) StructTypes.Add(name);
             }
-            // הערה: לא עושים Clear() כי זה מאפס את ה-ComboBox וגורם לבאג
         }
 
         private void RebuildTrees()
@@ -223,7 +224,16 @@ namespace IcdControl.Client
 
             if (target == null || _draggedItem == null) return;
 
-            // --- A: Instantiate a Struct ---
+            object containerToExpand = null;
+            if (target is Message || target is IcdControl.Models.Struct)
+            {
+                containerToExpand = target;
+            }
+            else if (target is DataField df)
+            {
+                containerToExpand = FindParentContainer(df).Container;
+            }
+
             if (_draggedItem is IcdControl.Models.Struct draggedStruct)
             {
                 var targetList = GetListFromContainer(target);
@@ -240,25 +250,21 @@ namespace IcdControl.Client
                     };
 
                     targetList.Add(newField);
-                    RefreshTreesVisual();
+                    RefreshTreesVisual(containerToExpand);
                 }
             }
-            // --- B: Reorder or Copy Field ---
             else if (_draggedItem is DataField draggedField)
             {
                 var sourceList = FindParentList(draggedField);
-
                 bool droppedOnField = target is DataField;
                 var targetList = droppedOnField ? FindParentList((DataField)target) : GetListFromContainer(target);
 
                 if (sourceList != null && targetList != null)
                 {
-                    // SAME CONTAINER
                     if (sourceList == targetList)
                     {
                         if (droppedOnField)
                         {
-                            // Reorder
                             int oldIndex = sourceList.IndexOf(draggedField);
                             int newIndex = sourceList.IndexOf((DataField)target);
 
@@ -267,16 +273,15 @@ namespace IcdControl.Client
                                 var item = sourceList[oldIndex];
                                 sourceList.RemoveAt(oldIndex);
                                 sourceList.Insert(newIndex, item);
-                                RefreshTreesVisual();
+                                RefreshTreesVisual(containerToExpand);
                             }
                         }
                         else
                         {
-                            // Duplicate
                             CopyFieldToList(draggedField, targetList, -1);
+                            RefreshTreesVisual(containerToExpand);
                         }
                     }
-                    // DIFFERENT CONTAINER
                     else
                     {
                         int insertIndex = -1;
@@ -285,6 +290,7 @@ namespace IcdControl.Client
                             insertIndex = targetList.IndexOf((DataField)target) + 1;
                         }
                         CopyFieldToList(draggedField, targetList, insertIndex);
+                        RefreshTreesVisual(containerToExpand);
                     }
                 }
             }
@@ -306,8 +312,6 @@ namespace IcdControl.Client
                 targetList.Insert(index, copy);
             else
                 targetList.Add(copy);
-
-            RefreshTreesVisual();
         }
 
         private string GetUniqueName(string baseName, IList targetList)
@@ -397,10 +401,17 @@ namespace IcdControl.Client
             }
         }
 
-        private void RefreshTreesVisual()
+        private void RefreshTreesVisual(object expandNode = null)
         {
             var expandedMsgNames = GetExpandedNames(MessagesTree, MessageList);
             var expandedStrNames = GetExpandedNames(StructsTree, StructList);
+
+            if (expandNode != null)
+            {
+                string name = (expandNode as dynamic).Name;
+                if (expandNode is Message) { if (!expandedMsgNames.Contains(name)) expandedMsgNames.Add(name); }
+                else if (expandNode is IcdControl.Models.Struct) { if (!expandedStrNames.Contains(name)) expandedStrNames.Add(name); }
+            }
 
             MessagesTree.Items.Refresh();
             StructsTree.Items.Refresh();
@@ -439,14 +450,11 @@ namespace IcdControl.Client
 
         private void UpdateDetailsView(object selected)
         {
-            // חשוב: קודם מעדכנים את רשימת הטייפים (ללא Clear)
             RefreshTypes();
 
-            // 1. איפוס מוחלט של התצוגה כדי למנוע התנגשות נתונים
             DetailsPresenter.Content = null;
             DetailsPresenter.ContentTemplate = null;
 
-            // 2. בחירת התבנית הנכונה
             DataTemplate newTemplate = null;
 
             if (selected is Message)
@@ -461,7 +469,6 @@ namespace IcdControl.Client
                     newTemplate = (DataTemplate)FindResource("PrimitiveFieldTemplate");
             }
 
-            // 3. השמה
             DetailsPresenter.ContentTemplate = newTemplate;
             DetailsPresenter.Content = selected;
         }
@@ -469,7 +476,6 @@ namespace IcdControl.Client
         private bool IsNestedStruct(string type)
         {
             if (string.IsNullOrEmpty(type)) return false;
-            // אם זה לא פרימיטיבי, אנחנו מניחים שזה מבנה
             return !PrimitiveTypes.Contains(type);
         }
 
@@ -524,12 +530,14 @@ namespace IcdControl.Client
 
         private void AddPrimitive_Click(object sender, RoutedEventArgs e)
         {
-            var list = GetListFromContainer(DetailsPresenter.Content);
+            var container = DetailsPresenter.Content;
+            var list = GetListFromContainer(container);
+
             if (list != null)
             {
                 string name = GetUniqueName("NewVar", list);
                 list.Add(new DataField { Name = name, Type = "uint32", SizeInBits = 32 });
-                RefreshTreesVisual();
+                RefreshTreesVisual(container);
             }
         }
 
@@ -541,7 +549,9 @@ namespace IcdControl.Client
                 return;
             }
 
-            var list = GetListFromContainer(DetailsPresenter.Content);
+            var container = DetailsPresenter.Content;
+            var list = GetListFromContainer(container);
+
             if (list != null)
             {
                 string defaultStruct = StructTypes[0];
@@ -549,7 +559,7 @@ namespace IcdControl.Client
                 string uniqueName = GetUniqueName(baseName, list);
 
                 list.Add(new DataField { Name = uniqueName, Type = defaultStruct, SizeInBits = 0 });
-                RefreshTreesVisual();
+                RefreshTreesVisual(container);
             }
         }
 
@@ -594,7 +604,7 @@ namespace IcdControl.Client
         }
 
         // =========================================================
-        // 6. SAVE & EXPORT
+        // 6. SAVE & EXPORT (CLIENT SIDE GENERATION)
         // =========================================================
 
         private async void SaveBtn_Click(object sender, RoutedEventArgs e)
@@ -605,19 +615,192 @@ namespace IcdControl.Client
             }
 
             RefreshTypes();
+            // Sync lists
             _currentIcd.Messages = MessageList.ToList();
             _currentIcd.Structs = StructList.ToList();
 
-            await SaveInternal(true);
+            // True = Increment Version
+            await SaveInternal(true, true);
         }
 
-        private async System.Threading.Tasks.Task<bool> SaveInternal(bool showMsg)
+        // התיקון המרכזי: יצירת הקובץ בצד הלקוח (ללא שרת)
+        private async void ExportHeader_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentIcd == null) return;
+
+            // 1. קודם שומרים את המצב הנוכחי (בלי להעלות גרסה)
+            bool saveSuccess = await SaveInternal(false, false);
+            if (!saveSuccess) return; // אם השמירה נכשלה, לא ממשיכים
+
+            try
+            {
+                // 2. יצירת המחרוזת של קובץ ה-Header בצד הלקוח
+                string content = GenerateCHeader(_currentIcd);
+                string fileName = _currentIcd.Name.Replace(" ", "_") + ".h";
+
+                // 3. פתיחת דיאלוג לשמירה
+                var dlg = new SaveFileDialog
+                {
+                    Filter = "C Header|*.h",
+                    FileName = fileName
+                };
+
+                if (dlg.ShowDialog() == true)
+                {
+                    File.WriteAllText(dlg.FileName, content, Encoding.UTF8);
+                    MessageBox.Show("Header exported successfully!", "Export", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Export error: {ex.Message}");
+            }
+        }
+
+        // --- לוגיקת יצירת Header (C/C++ Compatible) ---
+        private string GenerateCHeader(Icd icd)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            // 1. Header Guard
+            string cleanName = icd.Name.Replace(" ", "_").ToUpper();
+            string guard = $"{cleanName}_H";
+
+            sb.AppendLine($"#ifndef {guard}");
+            sb.AppendLine($"#define {guard}");
+            sb.AppendLine();
+
+            sb.AppendLine("/*");
+            sb.AppendLine($" * Generated ICD Header: {icd.Name}");
+            sb.AppendLine($" * Version: {icd.Version:0.0}");
+            sb.AppendLine($" * Description: {icd.Description}");
+            sb.AppendLine(" */");
+            sb.AppendLine();
+            sb.AppendLine("#include <stdint.h>");
+            sb.AppendLine("#include <stdbool.h>");
+            sb.AppendLine();
+
+            // 2. Struct Definitions (קודם, כי ההודעות משתמשות בהם)
+            if (icd.Structs != null && icd.Structs.Any())
+            {
+                sb.AppendLine("/******************************************************************************");
+                sb.AppendLine(" * STRUCT DEFINITIONS");
+                sb.AppendLine(" ******************************************************************************/");
+                foreach (var s in icd.Structs)
+                {
+                    sb.Append(GenerateStructBlock(s.Name, s.Fields));
+                }
+            }
+
+            // 3. Messages
+            if (icd.Messages != null && icd.Messages.Any())
+            {
+                sb.AppendLine("/******************************************************************************");
+                sb.AppendLine(" * MESSAGES");
+                sb.AppendLine(" ******************************************************************************/");
+                foreach (var msg in icd.Messages)
+                {
+                    sb.Append(GenerateStructBlock(msg.Name, msg.Fields));
+                }
+            }
+
+            sb.AppendLine($"#endif /* {guard} */");
+            return sb.ToString();
+        }
+
+        private string GenerateStructBlock(string structName, IEnumerable<BaseField> fields)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine($"/* Struct: {structName} */");
+
+            // שימוש ב-typedef כדי לאפשר גם ל-C וגם ל-C++ לעבוד נקי
+            sb.AppendLine("typedef struct {");
+
+            if (fields != null)
+            {
+                foreach (var baseField in fields)
+                {
+                    if (baseField is DataField field)
+                    {
+                        string cType = MapToCType(field.Type);
+                        sb.Append($"    {cType} {field.Name}");
+
+                        // אם זה פרימיטיבי ויש גודל בביטים מוגדר, מוסיפים Bitfield
+                        if (field.SizeInBits > 0 && IsPrimitive(field.Type))
+                        {
+                            sb.Append($" : {field.SizeInBits}");
+                        }
+
+                        sb.AppendLine(";");
+                    }
+                }
+            }
+
+            // השם בסוף ללא תוספת _t
+            sb.AppendLine($"}} {structName};");
+            sb.AppendLine();
+            return sb.ToString();
+        }
+
+        private bool IsPrimitive(string type)
+        {
+            return PrimitiveTypes.Contains(type);
+        }
+
+        private string MapToCType(string type)
+        {
+            // המרה בין שמות המערכת ל-stdint.h
+            return type switch
+            {
+                "uint8" => "uint8_t",
+                "int8" => "int8_t",
+                "uint16" => "uint16_t",
+                "int16" => "int16_t",
+                "uint32" => "uint32_t",
+                "int32" => "int32_t",
+                "uint64" => "uint64_t",
+                "int64" => "int64_t",
+                "float" => "float",
+                "double" => "double",
+                "bool" => "bool",
+                "char" => "char",
+                "string" => "char*",
+                _ => type // שמות של מבנים אחרים נשארים כמו שהם
+            };
+        }
+
+        private async System.Threading.Tasks.Task<bool> SaveInternal(bool showMsg, bool incrementVersion)
         {
             try
             {
                 _currentIcd.Name = NameTxt.Text;
-                if (double.TryParse(VersionTxt.Text, out double v)) _currentIcd.Version = v;
                 _currentIcd.Description = DescTxt.Text;
+
+                string currentVerStr = VersionTxt.Text;
+                double newVersion = 0;
+                double.TryParse(currentVerStr, out newVersion);
+
+                if (incrementVersion && !_versionChangedManually)
+                {
+                    if (double.TryParse(currentVerStr, out double currentVal))
+                    {
+                        int decimalPlaces = 0;
+                        if (currentVerStr.Contains("."))
+                        {
+                            decimalPlaces = currentVerStr.Length - currentVerStr.IndexOf(".") - 1;
+                        }
+
+                        if (decimalPlaces == 0) decimalPlaces = 1;
+
+                        double increment = 1.0 / Math.Pow(10, decimalPlaces);
+                        newVersion = currentVal + increment;
+                        newVersion = Math.Round(newVersion, decimalPlaces);
+                    }
+                }
+
+                _currentIcd.Version = newVersion;
+                VersionTxt.Text = newVersion.ToString("0.0################");
+                _versionChangedManually = false;
 
                 if (ApiClient.CurrentUser != null) LastUserTxt.Text = ApiClient.CurrentUser.Username;
                 if (showMsg) StatusTxt.Text = "Saving...";
@@ -638,26 +821,6 @@ namespace IcdControl.Client
             {
                 if (showMsg) MessageBox.Show("Error: " + ex.Message);
                 return false;
-            }
-        }
-
-        private async void ExportHeader_Click(object sender, RoutedEventArgs e)
-        {
-            if (_currentIcd == null) return;
-            if (await SaveInternal(false))
-            {
-                try
-                {
-                    var res = await ApiClient.Client.GetAsync($"api/icd/{_icdId}/export");
-                    if (res.IsSuccessStatusCode)
-                    {
-                        var content = await res.Content.ReadAsStringAsync();
-                        var dlg = new SaveFileDialog { Filter = "C Header|*.h", FileName = _currentIcd.Name + ".h" };
-                        if (dlg.ShowDialog() == true) File.WriteAllText(dlg.FileName, content, Encoding.UTF8);
-                    }
-                    else MessageBox.Show($"Export failed: {res.ReasonPhrase}");
-                }
-                catch (Exception ex) { MessageBox.Show($"Export error: {ex.Message}"); }
             }
         }
 
