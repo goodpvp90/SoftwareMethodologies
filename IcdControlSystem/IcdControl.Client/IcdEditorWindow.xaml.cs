@@ -362,9 +362,6 @@ namespace IcdControl.Client
             "string" => "char*",
             _ => type
         };
-
-        private void Undo_Click(object sender, RoutedEventArgs e) { }
-        private void Redo_Click(object sender, RoutedEventArgs e) { }
         private void CancelBtn_Click(object sender, RoutedEventArgs e) { Close(); }
     }
 

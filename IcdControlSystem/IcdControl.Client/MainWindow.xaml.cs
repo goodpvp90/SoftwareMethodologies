@@ -167,6 +167,55 @@ namespace IcdControl.Client
             }
         }
 
+        private async void DeleteBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (IcdGrid.SelectedItem is not Icd selected)
+            {
+                DialogService.ShowInfo("Delete ICD", "Please select an ICD from the list.", this);
+                return;
+            }
+
+            var confirmed = DialogService.Confirm(
+                "Confirm Delete",
+                $"Delete ICD '{selected.Name}'? This cannot be undone.",
+                primaryText: "Delete",
+                secondaryText: "Cancel",
+                owner: this);
+
+            if (!confirmed)
+                return;
+
+            try
+            {
+                var res = await ApiClient.Client.DeleteAsync($"api/icd/{selected.IcdId}");
+                if (res.IsSuccessStatusCode)
+                {
+                    await LoadIcds();
+                    return;
+                }
+
+                if ((int)res.StatusCode == 403)
+                {
+                    DialogService.ShowWarning("Delete ICD", "You do not have permission to delete this ICD.", this);
+                    return;
+                }
+
+                if ((int)res.StatusCode == 404)
+                {
+                    DialogService.ShowWarning("Delete ICD", "ICD was not found (it may have been deleted already). Refreshing list.", this);
+                    await LoadIcds();
+                    return;
+                }
+
+                var body = await res.Content.ReadAsStringAsync();
+                DialogService.ShowError("Delete ICD", $"Delete failed: {res.StatusCode}\n{body}", this);
+            }
+            catch (Exception ex)
+            {
+                DialogService.ShowError("Delete ICD", $"Delete failed: {ex.Message}", this);
+            }
+        }
+
         private async void ExportBtn_Click(object sender, RoutedEventArgs e)
         {
             if (IcdGrid.SelectedItem is Icd selected)
@@ -338,18 +387,19 @@ namespace IcdControl.Client
                     var stats = await ApiClient.Client.GetFromJsonAsync<StatsInfo>($"api/icd/{selected.IcdId}/stats");
                     if (stats != null)
                     {
-                        MessageBox.Show($"Statistics:\n\nTotal Messages: {stats.TotalMessages}\nTotal Structs: {stats.TotalStructs}\nTotal Fields: {stats.TotalFields}\nEstimated Size: {stats.EstimatedSizeBytes} bytes",
-                            "ICD Statistics", MessageBoxButton.OK, MessageBoxImage.Information);
+                        var win = new StatsWindow(selected.Name ?? "", stats);
+                        win.Owner = this;
+                        win.ShowDialog();
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Failed to load statistics: {ex.Message}");
+                    DialogService.ShowError("ICD Statistics", $"Failed to load statistics: {ex.Message}", this);
                 }
             }
             else
             {
-                MessageBox.Show("Please select an ICD first.");
+                DialogService.ShowInfo("ICD Statistics", "Please select an ICD first.", this);
             }
         }
 

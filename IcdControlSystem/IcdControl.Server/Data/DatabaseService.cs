@@ -437,6 +437,48 @@ namespace IcdControl.Server.Data
             cmd.ExecuteNonQuery();
         }
 
+        public bool DeleteIcd(string icdId)
+        {
+            using var c = new SqliteConnection(_conn);
+            c.Open();
+
+            using var tx = c.BeginTransaction();
+
+            using var delPerms = c.CreateCommand();
+            delPerms.Transaction = tx;
+            delPerms.CommandText = "DELETE FROM UserIcdPermissions WHERE IcdId = $id";
+            delPerms.Parameters.AddWithValue("$id", icdId);
+            delPerms.ExecuteNonQuery();
+
+            using var delVersions = c.CreateCommand();
+            delVersions.Transaction = tx;
+            delVersions.CommandText = "DELETE FROM IcdVersions WHERE IcdId = $id";
+            delVersions.Parameters.AddWithValue("$id", icdId);
+            delVersions.ExecuteNonQuery();
+
+            using var delComments = c.CreateCommand();
+            delComments.Transaction = tx;
+            delComments.CommandText = "DELETE FROM IcdComments WHERE IcdId = $id";
+            delComments.Parameters.AddWithValue("$id", icdId);
+            delComments.ExecuteNonQuery();
+
+            using var delHistory = c.CreateCommand();
+            delHistory.Transaction = tx;
+            delHistory.CommandText = "DELETE FROM IcdChangeHistory WHERE IcdId = $id";
+            delHistory.Parameters.AddWithValue("$id", icdId);
+            delHistory.ExecuteNonQuery();
+
+            using var delIcd = c.CreateCommand();
+            delIcd.Transaction = tx;
+            delIcd.CommandText = "DELETE FROM Icds WHERE IcdId = $id";
+            delIcd.Parameters.AddWithValue("$id", icdId);
+            var rows = delIcd.ExecuteNonQuery();
+
+            tx.Commit();
+
+            return rows > 0;
+        }
+
         // Version History
         public void SaveIcdVersion(string icdId, double versionNumber, string structureContentJson, string userId)
         {

@@ -22,6 +22,8 @@ namespace IcdControl.Client
             SetThemeBrush("SurfaceAltColor", Color.FromRgb(20, 31, 55));
             SetThemeBrush("ControlBackgroundColor", Color.FromRgb(17, 24, 39));
             SetThemeBrush("HoverBackgroundColor", Color.FromRgb(31, 42, 68));
+            SetThemeBrush("SelectionBackgroundColor", Color.FromRgb(0, 122, 204));
+            SetThemeBrush("SelectionForegroundColor", Color.FromRgb(255, 255, 255));
             SetThemeBrush("DataGridHeaderBackgroundColor", Color.FromRgb(17, 24, 39));
             SetThemeBrush("TextPrimaryColor", Color.FromRgb(229, 231, 235));
             SetThemeBrush("TextSecondaryColor", Color.FromRgb(156, 163, 175));
@@ -38,6 +40,8 @@ namespace IcdControl.Client
             SetThemeBrush("SurfaceAltColor", Color.FromRgb(249, 250, 251));
             SetThemeBrush("ControlBackgroundColor", Color.FromRgb(255, 255, 255));
             SetThemeBrush("HoverBackgroundColor", Color.FromRgb(249, 250, 251));
+            SetThemeBrush("SelectionBackgroundColor", Color.FromRgb(0, 122, 204));
+            SetThemeBrush("SelectionForegroundColor", Color.FromRgb(255, 255, 255));
             SetThemeBrush("DataGridHeaderBackgroundColor", Color.FromRgb(243, 244, 246));
             SetThemeBrush("TextPrimaryColor", Color.FromRgb(31, 41, 55));
             SetThemeBrush("TextSecondaryColor", Color.FromRgb(107, 114, 128));

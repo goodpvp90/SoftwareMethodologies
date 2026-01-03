@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:IcdControl.Client"
         mc:Ignorable="d"
-        Title="ICD Control System" Height="600" Width="1000" 
+        Title="ICD Control System" Height="600" Width="1000" MinHeight="520" MinWidth="820"
         WindowStartupLocation="CenterScreen" Background="{DynamicResource BackgroundColor}"
         Loaded="Window_Loaded" PreviewKeyDown="Window_PreviewKeyDown">
     <Grid>
@@ -25,6 +25,7 @@
 
                 <TextBlock Text="ACTIONS" FontSize="12" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,20,0,10"/>
                 <Button x:Name="OpenBtn" Content="Open Editor" Style="{StaticResource SecondaryBtn}" Click="OpenBtn_Click" Margin="0,0,0,10"/>
+                <Button x:Name="DeleteBtn" Content="Delete ICD" Style="{StaticResource SecondaryBtn}" Click="DeleteBtn_Click" Foreground="#EF4444" Margin="0,0,0,10"/>
                 <Button x:Name="ExportBtn" Content="Export Header" Style="{StaticResource SecondaryBtn}" Click="ExportBtn_Click" Margin="0,0,0,10"/>
                 <Button x:Name="ExportCsvBtn" Content="Export CSV" Style="{StaticResource SecondaryBtn}" Click="ExportCsvBtn_Click" Margin="0,0,0,10"/>
 

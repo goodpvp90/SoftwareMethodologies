@@ -130,6 +130,24 @@ namespace IcdControl.Server.Controllers
             return Ok(icd);
         }
 
+        [HttpDelete("{id}")]
+        public IActionResult Delete(string id)
+        {
+            if (!Request.Headers.TryGetValue("X-UserId", out var uid) || string.IsNullOrEmpty(uid))
+                return Unauthorized("Missing user header");
+            var userId = uid.ToString();
+
+            if (!_db.HasEditPermission(userId, id))
+                return StatusCode(StatusCodes.Status403Forbidden, "You do not have edit permission for this ICD.");
+
+            var deleted = _db.DeleteIcd(id);
+            if (!deleted)
+                return NotFound();
+
+            _db.LogChange(id, userId, "DELETE", "Deleted ICD");
+            return NoContent();
+        }
+
         // ---------------------------------------------------------
         // EXPORT LOGIC (UPDATED)
         // ---------------------------------------------------------
