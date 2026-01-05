@@ -35,8 +35,19 @@ namespace IcdControl.Client
         private static readonly List<string> Primitives = new List<string> { "uint8", "int8", "uint16", "int16", "uint32", "int32", "uint64", "int64", "float", "double", "bool", "char", "string" };
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is string typeStr) { if (Primitives.Contains(typeStr)) return new SolidColorBrush(Color.FromRgb(96, 165, 250)); return new SolidColorBrush(Color.FromRgb(245, 158, 11)); }
-            return Brushes.Gray;
+            if (value is string typeStr)
+            {
+                var app = Application.Current;
+                var primitiveBrush = app?.Resources["PrimitiveAccentColor"] as Brush;
+                var linkedBrush = app?.Resources["LinkedStructAccentColor"] as Brush;
+
+                primitiveBrush ??= new SolidColorBrush(Color.FromRgb(29, 78, 216));
+                linkedBrush ??= new SolidColorBrush(Color.FromRgb(180, 83, 9));
+
+                return Primitives.Contains(typeStr) ? primitiveBrush : linkedBrush;
+            }
+
+            return Application.Current?.Resources["TextSecondaryColor"] as Brush ?? Brushes.Gray;
         }
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
     }

@@ -4,12 +4,21 @@
 *.suo
 *.userosscache
 *.sln.docstates
+*.rsuser
+
+## Rider / JetBrains ##
+.idea/
 
 ## Build results ##
 [Bb]in/
 [Oo]bj/
 
+## NuGet / MSBuild transient files ##
+*.nupkg
+*.snupkg
+*.cache
+*.log
+
 ## Other ##
 .DS_Store
 Thumbs.db
-/IcdControlSystem/IcdControl.Client/obj

@@ -28,6 +28,11 @@ namespace IcdControl.Client
             SetThemeBrush("TextPrimaryColor", Color.FromRgb(229, 231, 235));
             SetThemeBrush("TextSecondaryColor", Color.FromRgb(156, 163, 175));
             SetThemeBrush("BorderColor", Color.FromRgb(51, 65, 85));
+
+            // Accents: brighter in dark mode.
+            SetThemeBrush("PrimitiveAccentColor", Color.FromRgb(96, 165, 250));
+            SetThemeBrush("LinkedStructAccentColor", Color.FromRgb(245, 158, 11));
+            SetThemeBrush("StructAccentColor", Color.FromRgb(16, 185, 129));
         }
 
         public static void ApplyLightMode(bool userInitiated = false)
@@ -46,6 +51,11 @@ namespace IcdControl.Client
             SetThemeBrush("TextPrimaryColor", Color.FromRgb(31, 41, 55));
             SetThemeBrush("TextSecondaryColor", Color.FromRgb(107, 114, 128));
             SetThemeBrush("BorderColor", Color.FromRgb(229, 231, 235));
+
+            // Accents: darker in light mode for better contrast.
+            SetThemeBrush("PrimitiveAccentColor", Color.FromRgb(29, 78, 216));
+            SetThemeBrush("LinkedStructAccentColor", Color.FromRgb(180, 83, 9));
+            SetThemeBrush("StructAccentColor", Color.FromRgb(4, 120, 87));
         }
 
         public static Task InitializeFromServerAsync() => InitializeFromServerAsync(ApiClient.Client);

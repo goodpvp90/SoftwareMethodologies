@@ -5,6 +5,12 @@
     <Application.Resources>
         <SolidColorBrush x:Key="PrimaryColor" Color="#007ACC"/>
         <SolidColorBrush x:Key="PrimaryDarkColor" Color="#005A9E"/>
+
+        <!-- Accent brushes (theme-aware via ThemeManager) -->
+        <SolidColorBrush x:Key="PrimitiveAccentColor" Color="#1D4ED8"/>
+        <SolidColorBrush x:Key="LinkedStructAccentColor" Color="#B45309"/>
+        <SolidColorBrush x:Key="StructAccentColor" Color="#047857"/>
+
         <SolidColorBrush x:Key="BackgroundColor" Color="#F3F4F6"/>
         <SolidColorBrush x:Key="SurfaceColor" Color="#FFFFFF"/>
         <SolidColorBrush x:Key="SurfaceAltColor" Color="#F9FAFB"/>

@@ -93,7 +93,7 @@
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="📦 "/>
                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryColor}"/>
-                    <TextBlock Text=" (Union)" Foreground="#F59E0B" FontSize="10" VerticalAlignment="Center" Margin="5,0,0,0" 
+                    <TextBlock Text=" (Union)" Foreground="{DynamicResource LinkedStructAccentColor}" FontSize="10" VerticalAlignment="Center" Margin="5,0,0,0" 
                                Visibility="{Binding IsUnion, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}"/>
                 </StackPanel>
             </Grid>
@@ -101,8 +101,8 @@
 
         <DataTemplate x:Key="PrimitiveFieldTemplate">
             <StackPanel Margin="10">
-                <Border BorderBrush="#60A5FA" BorderThickness="0,0,0,2" Margin="0,0,0,15">
-                    <TextBlock Text="Edit Primitive Field" FontSize="18" FontWeight="Bold" Foreground="#60A5FA" Margin="0,0,0,10"/>
+                <Border BorderBrush="{DynamicResource PrimitiveAccentColor}" BorderThickness="0,0,0,2" Margin="0,0,0,15">
+                    <TextBlock Text="Edit Primitive Field" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimitiveAccentColor}" Margin="0,0,0,10"/>
                 </Border>
                 <TextBlock Text="Variable Name" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,0,4"/>
                 <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15"/>
@@ -121,11 +121,11 @@
 
         <DataTemplate x:Key="LinkedStructTemplate">
             <StackPanel Margin="10">
-                <Border BorderBrush="#F59E0B" BorderThickness="0,0,0,2" Margin="0,0,0,15">
-                    <TextBlock Text="🔗 Linked Struct Instance" FontSize="18" FontWeight="Bold" Foreground="#F59E0B" Margin="0,0,0,10"/>
+                <Border BorderBrush="{DynamicResource LinkedStructAccentColor}" BorderThickness="0,0,0,2" Margin="0,0,0,15">
+                    <TextBlock Text="🔗 Linked Struct Instance" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource LinkedStructAccentColor}" Margin="0,0,0,10"/>
                 </Border>
                 <TextBlock Text="Note: This is an instance of another Struct definition." Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,0,20"/>
-                <TextBlock Text="Instance Name" Foreground="#F59E0B" FontWeight="Bold" Margin="0,0,0,4"/>
+                <TextBlock Text="Instance Name" Foreground="{DynamicResource LinkedStructAccentColor}" FontWeight="Bold" Margin="0,0,0,4"/>
                 <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,15"/>
                 <TextBlock Text="Struct Definition Type" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,0,4"/>
                 <ComboBox SelectedItem="{Binding Type, UpdateSourceTrigger=PropertyChanged}" 
@@ -147,7 +147,7 @@
                 <TextBlock Text="Add Variables:" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,0,5"/>
                 <StackPanel Orientation="Horizontal">
                     <Button Content="+ Add Primitive" Click="AddPrimitive_Click" Style="{StaticResource ModernBtn}" Margin="0,0,10,0"/>
-                    <Button Content="+ Add Linked Struct" Click="AddLinkedStruct_Click" Style="{StaticResource ModernBtn}" Background="#F59E0B" BorderBrush="#F59E0B" Margin="0,0,10,0"/>
+                    <Button Content="+ Add Linked Struct" Click="AddLinkedStruct_Click" Style="{StaticResource ModernBtn}" Background="{DynamicResource LinkedStructAccentColor}" BorderBrush="{DynamicResource LinkedStructAccentColor}" Margin="0,0,10,0"/>
                 </StackPanel>
                 <Button Content="🗑 Delete Message" Click="RemoveItem_Click" Style="{StaticResource SecondaryBtn}" Foreground="#EF4444" HorizontalAlignment="Left" Margin="0,20,0,0"/>
             </StackPanel>
@@ -155,8 +155,8 @@
 
         <DataTemplate x:Key="StructEditorTemplate">
             <StackPanel Margin="10">
-                <Border BorderBrush="#10B981" BorderThickness="0,0,0,2" Margin="0,0,0,15">
-                    <TextBlock Text="Edit Struct Definition" FontSize="18" FontWeight="Bold" Foreground="#10B981" Margin="0,0,0,10"/>
+                <Border BorderBrush="{DynamicResource StructAccentColor}" BorderThickness="0,0,0,2" Margin="0,0,0,15">
+                    <TextBlock Text="Edit Struct Definition" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource StructAccentColor}" Margin="0,0,0,10"/>
                 </Border>
                 <TextBlock Text="Struct Name" Foreground="{DynamicResource TextSecondaryColor}"/>
                 <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
@@ -177,7 +177,7 @@
                 <TextBlock Text="Add Variables:" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryColor}" Margin="0,0,0,5"/>
                 <StackPanel Orientation="Horizontal">
                     <Button Content="+ Add Primitive" Click="AddPrimitive_Click" Style="{StaticResource ModernBtn}" Margin="0,0,10,0"/>
-                    <Button Content="+ Add Linked Struct" Click="AddLinkedStruct_Click" Style="{StaticResource ModernBtn}" Background="#F59E0B" BorderBrush="#F59E0B" Margin="0,0,10,0"/>
+                    <Button Content="+ Add Linked Struct" Click="AddLinkedStruct_Click" Style="{StaticResource ModernBtn}" Background="{DynamicResource LinkedStructAccentColor}" BorderBrush="{DynamicResource LinkedStructAccentColor}" Margin="0,0,10,0"/>
                 </StackPanel>
                 <Button Content="🗑 Delete Struct" Click="RemoveItem_Click" Style="{StaticResource SecondaryBtn}" Foreground="#EF4444" HorizontalAlignment="Left" Margin="0,20,0,0"/>
             </StackPanel>

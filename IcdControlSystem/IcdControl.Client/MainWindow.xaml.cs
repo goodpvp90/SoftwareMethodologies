@@ -216,37 +216,6 @@ namespace IcdControl.Client
             }
         }
 
-        private async void ExportBtn_Click(object sender, RoutedEventArgs e)
-        {
-            if (IcdGrid.SelectedItem is Icd selected)
-            {
-                try
-                {
-                    var res = await ApiClient.Client.GetAsync($"api/icd/{selected.IcdId}/export");
-                    if (!res.IsSuccessStatusCode)
-                    {
-                        MessageBox.Show($"Export failed: {res.ReasonPhrase}");
-                        return;
-                    }
-                    var content = await res.Content.ReadAsStringAsync();
-                    var dlg = new SaveFileDialog { Filter = "C Header|*.h", FileName = MakeSafeFileName(selected.Name) + ".h" };
-                    if (dlg.ShowDialog() == true)
-                    {
-                        File.WriteAllText(dlg.FileName, content, Encoding.UTF8);
-                        MessageBox.Show("Export saved successfully.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Export failed: {ex.Message}");
-                }
-            }
-            else
-            {
-                MessageBox.Show("Please select an ICD first.");
-            }
-        }
-
         private async void ExportCsvBtn_Click(object sender, RoutedEventArgs e)
         {
             if (IcdGrid.SelectedItem is Icd selected)
